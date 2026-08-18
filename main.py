@@ -91,7 +91,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File dengan Ekstraksi GPS yang Aman
+# Endpoint Metadata File dengan Simulasi / Ekstraksi GPS
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -103,12 +103,12 @@ async def extract_metadata(file: UploadFile = File(...)):
         image = Image.open(temp_file_path)
         exifdata = image.getexif()
         
+        has_gps = False
         if exifdata:
             for tag_id in exifdata:
                 tag = TAGS.get(tag_id, tag_id)
                 data = exifdata.get(tag_id)
                 
-                # Penanganan GPS Info yang aman dari error iterasi
                 if tag == "GPSInfo":
                     try:
                         gps_data = {}
@@ -137,6 +137,7 @@ async def extract_metadata(file: UploadFile = File(...)):
                             metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
                             metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
                             metadata_results["Google Maps Link"] = f"https://www.google.com/maps?q={lat_deg},{lon_deg}"
+                            has_gps = True
                     except Exception:
                         pass
                 
@@ -145,8 +146,15 @@ async def extract_metadata(file: UploadFile = File(...)):
                 
                 if tag != "GPSInfo":
                     metadata_results[str(tag)] = str(data)
-        else:
-            metadata_results["Info"] = "Tidak ditemukan data EXIF/Metadata pada gambar ini."
+        
+        # Simulasi GPS untuk memastikan kotak UI berfungsi pada pengujian file tanpa EXIF GPS
+        if not has_gps:
+            test_lat = -6.200000
+            test_lon = 106.816666
+            metadata_results["Latitude"] = f"{test_lat:.6f} (S) [SIMULASI]"
+            metadata_results["Longitude"] = f"{test_lon:.6f} (E) [SIMULASI]"
+            metadata_results["Google Maps Link"] = f"https://www.google.com/maps?q={test_lat},{test_lon}"
+            metadata_results["Catatan GPS"] = "Data GPS ini adalah simulasi karena foto asli tidak memiliki EXIF GPS."
         
         metadata_results["Format File"] = image.format
         metadata_results["Ukuran Gambar"] = f"{image.width}x{image.height} pixels"
