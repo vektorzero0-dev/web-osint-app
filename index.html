@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VEKTOR ZERO | Enterprise OSINT Intelligence Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700;900&display=swap');
+
+        body {
+            font-family: 'JetBrains+Mono', monospace;
+            background-color: #030712;
+            color: #f3f4f6;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-glow {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #030712; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Security Banner / Navbar -->
+    <header class="glass-card border-b border-blue-900/40 sticky top-0 z-50 px-6 py-4">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
+                <h1 class="text-xl font-black tracking-widest font-orbitron text-blue-400 neon-glow">
+                    VEKTOR <span class="text-white">ZERO</span>
+                </h1>
+                <span class="text-xs bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded font-mono">v3.0 SECURE</span>
+            </div>
+            
+            <div class="flex items-center space-x-4 text-xs font-mono">
+                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400">OPERATOR:</span>
+                    <span class="text-emerald-400 font-bold tracking-wider">ZEEO</span>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-slate-300">SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Body -->
+    <main class="container mx-auto px-4 py-8 flex-grow grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- CARD 1: File Metadata Analyzer -->
+        <section class="glass-card p-6 rounded-2xl transition duration-300">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold font-orbitron text-blue-400 flex items-center gap-2">
+                    <span>📁</span> METADATA EXTRACTOR
+                </h2>
+                <span class="text-xs text-slate-500 font-mono">EXIF / FILE INSPECTOR</span>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-2">PILIH FILE TARGET (GAMBAR/DOKUMEN)</label>
+                    <input type="file" id="metaFile" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer bg-slate-950/60 border border-slate-800 rounded-xl p-2">
+                </div>
+                <button onclick="uploadAndAnalyzeMetadata()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold tracking-wider py-3 rounded-xl transition shadow-lg shadow-blue-900/30 uppercase font-orbitron">
+                    Jalankan Analisis Metadata
+                </button>
+            </div>
+            
+            <div id="metaResultContainer" class="hidden mt-6 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs text-slate-400">TARGET FILE:</span>
+                    <span id="metaFilename" class="text-xs text-blue-400 font-bold truncate max-w-[200px]"></span>
+                </div>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto rounded-lg border border-slate-900">
+                    <table class="w-full text-left text-xs">
+                        <tbody id="metaTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARD 2: WHOIS / DNS Intelligence (Placeholder fitur lengkap Anda) -->
+        <section class="glass-card p-6 rounded-2xl transition duration-300">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                <h2 class="text-base font-bold font-orbitron text-emerald-400 flex items-center gap-2">
+                    <span>🌐</span> DOMAIN & IP RECON
+                </h2>
+                <span class="text-xs text-slate-500 font-mono">WHOIS / DNS LOOKUP</span>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-2">MASUKKAN TARGET DOMAIN / IP</label>
+                    <input type="text" id="domainInput" placeholder="contoh: target-domain.com" class="w-full bg-slate-950/60 border border-slate-800 text-xs p-3 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+                </div>
+                <button onclick="runDomainLookup()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold tracking-wider py-3 rounded-xl transition shadow-lg shadow-emerald-900/30 uppercase font-orbitron">
+                    Lacak Target Domain
+                </button>
+            </div>
+
+            <div id="domainResultContainer" class="hidden mt-6 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 max-h-64 overflow-y-auto">
+                <pre id="domainResultText" class="text-xs font-mono text-emerald-400/90 whitespace-pre-wrap"></pre>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Khas VEKTOR ZERO & ZEEO -->
+    <footer class="glass-card border-t border-blue-900/30 py-6 mt-12">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+                <p class="text-xs text-slate-400 font-mono">
+                    Powered by <strong class="text-white font-orbitron tracking-wider">VEKTOR ZERO</strong> 
+                    <span class="mx-2 text-slate-700">|</span> 
+                    Lead Developer & Architect: <span class="text-blue-400 font-bold">ZEEO</span>
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="mailto:mishbachachmad07@gmail.com" class="bg-red-500/10 border border-red-500/30 hover:bg-red-600 hover:border-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
+                    <span>📧</span> Email Developer
+                </a>
+                <a href="https://wa.me/6282371729760" target="_blank" class="bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-600 hover:border-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
+                    <span>💬</span> WhatsApp Developer
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Integrasi Backend -->
+    <script>
+        async function uploadAndAnalyzeMetadata() {
+            const fileInput = document.getElementById('metaFile');
+            const metaResultContainer = document.getElementById('metaResultContainer');
+            const metaTableBody = document.getElementById('metaTableBody');
+            const metaFilename = document.getElementById('metaFilename');
+
+            if (fileInput.files.length === 0) {
+                alert('Silakan pilih file gambar terlebih dahulu.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            metaFilename.textContent = fileInput.files[0].name;
+            metaTableBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-500 font-mono animate-pulse">Mengekstrak metadata file...</td></tr>';
+            metaResultContainer.classList.remove('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/metadata', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const json = await response.json();
+
+                if (json.success) {
+                    metaTableBody.innerHTML = '';
+                    const metadata = json.metadata;
+                    if (Object.keys(metadata).length === 0) {
+                        metaTableBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-500">Tidak ada metadata ditemukan.</td></tr>';
+                        return;
+                    }
+                    for (const [key, value] of Object.entries(metadata)) {
+                        metaTableBody.innerHTML += `
+                            <tr class="border-b border-slate-900/80 hover:bg-slate-900/40">
+                                <td class="p-2.5 font-mono text-slate-400 font-semibold">${key}</td>
+                                <td class="p-2.5 font-mono text-slate-200">${value}</td>
+                            </tr>`;
+                    }
+                } else {
+                    alert('Gagal memproses metadata.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Terjadi kesalahan koneksi ke server backend (Pastikan FastAPI menyala).');
+            }
+        }
+
+        function runDomainLookup() {
+            const domain = document.getElementById('domainInput').value;
+            if(!domain) {
+                alert('Masukkan target domain terlebih dahulu.');
+                return;
+            }
+            document.getElementById('domainResultContainer').classList.remove('hidden');
+            document.getElementById('domainResultText').textContent = `[+] Menginisialisasi modul pencarian untuk target: ${domain}...\n[+] Menghubungkan ke server DNS/WHOIS...\n[Status] Siap dihubungkan ke endpoint backend Anda.`;
+        }
+    </script>
+</body>
+</html>
