@@ -60,7 +60,6 @@ def convert_to_degress(value):
 
 # --- 4. ENDPOINTS / ROUTES ---
 
-# Halaman Utama: Memuat Tampilan Dashboard (index.html)
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     if os.path.exists("index.html"):
@@ -72,12 +71,10 @@ def read_root():
         <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
             <h1>⚠️ File index.html tidak ditemukan!</h1>
             <p>Pastikan file index.html berada di folder yang sama dengan main.py</p>
-            <p>Atau akses dokumentasi API di <a href="/docs" style="color: #f43f5e;">/docs</a></p>
         </body>
     </html>
     """
 
-# Endpoint Informasi Developer
 @app.get("/api/developer")
 def get_developer_info():
     return {
@@ -91,7 +88,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File dengan Simulasi / Ekstraksi GPS
+# Endpoint Metadata File (Tanpa Simulasi GPS, jika kosong bernilai '-')
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -99,11 +96,14 @@ async def extract_metadata(file: UploadFile = File(...)):
         buffer.write(await file.read())
     
     metadata_results = {}
+    lat_val = "-"
+    lon_val = "-"
+    map_link = "-"
+
     try:
         image = Image.open(temp_file_path)
         exifdata = image.getexif()
         
-        has_gps = False
         if exifdata:
             for tag_id in exifdata:
                 tag = TAGS.get(tag_id, tag_id)
@@ -134,10 +134,9 @@ async def extract_metadata(file: UploadFile = File(...)):
                             if lon_ref != "E":
                                 lon_deg = -lon_deg
 
-                            metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
-                            metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
-                            metadata_results["Google Maps Link"] = f"https://www.google.com/maps?q={lat_deg},{lon_deg}"
-                            has_gps = True
+                            lat_val = f"{lat_deg:.6f} ({lat_ref})"
+                            lon_val = f"{lon_deg:.6f} ({lon_ref})"
+                            map_link = f"https://www.google.com/maps?q={lat_deg},{lon_deg}"
                     except Exception:
                         pass
                 
@@ -146,16 +145,14 @@ async def extract_metadata(file: UploadFile = File(...)):
                 
                 if tag != "GPSInfo":
                     metadata_results[str(tag)] = str(data)
+        else:
+            metadata_results["Info"] = "Tidak ditemukan data EXIF/Metadata pada gambar ini."
         
-        # Simulasi GPS untuk memastikan kotak UI berfungsi pada pengujian file tanpa EXIF GPS
-        if not has_gps:
-            test_lat = -6.200000
-            test_lon = 106.816666
-            metadata_results["Latitude"] = f"{test_lat:.6f} (S) [SIMULASI]"
-            metadata_results["Longitude"] = f"{test_lon:.6f} (E) [SIMULASI]"
-            metadata_results["Google Maps Link"] = f"https://www.google.com/maps?q={test_lat},{test_lon}"
-            metadata_results["Catatan GPS"] = "Data GPS ini adalah simulasi karena foto asli tidak memiliki EXIF GPS."
-        
+        # Masukkan hasil koordinat GPS (Asli atau '-')
+        metadata_results["Latitude"] = lat_val
+        metadata_results["Longitude"] = lon_val
+        metadata_results["Google Maps Link"] = map_link
+
         metadata_results["Format File"] = image.format
         metadata_results["Ukuran Gambar"] = f"{image.width}x{image.height} pixels"
         metadata_results["Mode Warna"] = image.mode
@@ -167,7 +164,6 @@ async def extract_metadata(file: UploadFile = File(...)):
         
     return {"success": True, "filename": file.filename, "metadata": metadata_results}
 
-# Endpoint Scan Target OSINT
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -249,7 +245,6 @@ def scan_target(target: str):
 
     return {"success": True, "data": result_data}
 
-# Endpoint Riwayat Scan
 @app.get("/api/history")
 def get_history():
     conn = sqlite3.connect("osint_history.db")
@@ -267,3 +262,4 @@ def get_history():
             "checked_at": row[3]
         })
     return {"success": True, "history": history}
+```[cite: 2]
