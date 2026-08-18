@@ -91,7 +91,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File dengan Ekstraksi GPS
+# Endpoint Metadata File dengan Ekstraksi GPS yang Aman
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -108,14 +108,19 @@ async def extract_metadata(file: UploadFile = File(...)):
                 tag = TAGS.get(tag_id, tag_id)
                 data = exifdata.get(tag_id)
                 
-                # Tangani khusus GPS Info (Tag 34853)
+                # Penanganan GPS Info yang aman dari error iterasi
                 if tag == "GPSInfo":
-                    gps_data = {}
-                    for t in data:
-                        sub_tag = GPSTAGS.get(t, t)
-                        gps_data[sub_tag] = data[t]
-                    
                     try:
+                        gps_data = {}
+                        if isinstance(data, dict):
+                            raw_gps = data
+                        else:
+                            raw_gps = image.get_ifd(tag_id) if hasattr(image, "get_ifd") else {}
+
+                        for t in raw_gps:
+                            sub_tag = GPSTAGS.get(t, t)
+                            gps_data[sub_tag] = raw_gps[t]
+                        
                         lat = gps_data.get("GPSLatitude")
                         lat_ref = gps_data.get("GPSLatitudeRef")
                         lon = gps_data.get("GPSLongitude")
