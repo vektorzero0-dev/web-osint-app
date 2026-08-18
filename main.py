@@ -9,7 +9,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sqlite3
 from PIL import Image
-from PIL.ExifTags import TAGS
+from PIL.ExifTags import TAGS, GPSTAGS
 import os
 
 # --- 1. INISIALISASI APP ---
@@ -52,6 +52,12 @@ def check_single_port(ip: str, port: int):
     except:
         return port, "Tertutup"
 
+def convert_to_degress(value):
+    d = float(value[0])
+    m = float(value[1])
+    s = float(value[2])
+    return d + (m / 60.0) + (s / 3600.0)
+
 # --- 4. ENDPOINTS / ROUTES ---
 
 # Halaman Utama: Memuat Tampilan Dashboard (index.html)
@@ -85,7 +91,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File
+# Endpoint Metadata File dengan Ekstraksi GPS
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -96,13 +102,44 @@ async def extract_metadata(file: UploadFile = File(...)):
     try:
         image = Image.open(temp_file_path)
         exifdata = image.getexif()
+        
         if exifdata:
             for tag_id in exifdata:
                 tag = TAGS.get(tag_id, tag_id)
                 data = exifdata.get(tag_id)
+                
+                # Tangani khusus GPS Info (Tag 34853)
+                if tag == "GPSInfo":
+                    gps_data = {}
+                    for t in data:
+                        sub_tag = GPSTAGS.get(t, t)
+                        gps_data[sub_tag] = data[t]
+                    
+                    try:
+                        lat = gps_data.get("GPSLatitude")
+                        lat_ref = gps_data.get("GPSLatitudeRef")
+                        lon = gps_data.get("GPSLongitude")
+                        lon_ref = gps_data.get("GPSLongitudeRef")
+
+                        if lat and lon and lat_ref and lon_ref:
+                            lat_deg = convert_to_degress(lat)
+                            if lat_ref != "N":
+                                lat_deg = -lat_deg
+                            lon_deg = convert_to_degress(lon)
+                            if lon_ref != "E":
+                                lon_deg = -lon_deg
+
+                            metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
+                            metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
+                            metadata_results["Google Maps Link"] = f"https://www.google.com/maps?q={lat_deg},{lon_deg}"
+                    except Exception:
+                        pass
+                
                 if isinstance(data, bytes):
                     data = data.decode(errors="ignore")
-                metadata_results[str(tag)] = str(data)
+                
+                if tag != "GPSInfo":
+                    metadata_results[str(tag)] = str(data)
         else:
             metadata_results["Info"] = "Tidak ditemukan data EXIF/Metadata pada gambar ini."
         
