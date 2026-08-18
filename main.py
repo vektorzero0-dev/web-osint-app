@@ -1,12 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
 
 app = FastAPI(title="OSINT Metadata Engine")
 
-# Tambahkan CORS agar bisa diakses dari frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,18 +14,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 1. Rute utama agar tidak 404
-@app.get("/")
+# 1. RUTE UTAMA: Memuat Tampilan Web (index.html)
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-    return {"status": "Online", "message": "Metadata Engine siap menerima file."}
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    return """
+    <html>
+        <head><title>OSINT Engine</title></head>
+        <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
+            <h1>⚠️ File index.html tidak ditemukan!</h1>
+            <p>Pastikan file index.html berada di folder yang sama dengan main.py</p>
+        </body>
+    </html>
+    """
 
 def get_gps_data(exif_data):
-    """Fungsi ekstraksi GPS yang dipaksa membaca IFD 34853"""
+    """Fungsi ekstraksi GPS presisi tinggi (IFD 34853)"""
     if not exif_data: 
         return "-", "-", "-"
     
     try:
-        # ID 34853 adalah standar untuk GPSInfo
         gps_info = exif_data.get_ifd(34853)
         if not gps_info: 
             return "-", "-", "-"
@@ -37,7 +47,6 @@ def get_gps_data(exif_data):
         lon_ref = gps_map.get("GPSLongitudeRef")
 
         if lat and lat_ref and lon and lon_ref:
-            # Kalkulasi derajat desimal
             lat_val = float(lat[0]) + float(lat[1])/60 + float(lat[2])/3600
             if lat_ref != 'N': lat_val = -lat_val
             
@@ -50,9 +59,9 @@ def get_gps_data(exif_data):
     
     return "-", "-", "-"
 
+# 2. RUTE API METADATA
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
-    # Simpan file ke sistem sementara
     temp_filename = f"upload_{file.filename}"
     with open(temp_filename, "wb") as f:
         f.write(await file.read())
@@ -62,7 +71,6 @@ async def extract_metadata(file: UploadFile = File(...)):
         exif = img.getexif()
         lat, lon, link = get_gps_data(exif)
         
-        # Bersihkan file setelah dibaca
         img.close()
         
         return {
