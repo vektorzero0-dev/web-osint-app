@@ -1,20 +1,69 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+import requests
+import socket
+import whois
+import dns.resolver
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+import sqlite3
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
 
-app = FastAPI(title="OSINT Metadata Engine")
+# --- 1. INISIALISASI APP ---
+app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="5.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 1. RUTE UTAMA: Memuat Tampilan Web (index.html)
+# --- 2. DATABASE INITIALIZATION ---
+def init_db():
+    conn = sqlite3.connect("osint_history.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS scan_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target TEXT,
+            ip_address TEXT,
+            status TEXT,
+            checked_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# --- 3. UTILITIES ---
+def check_single_port(ip: str, port: int):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.8)
+        result = s.connect_ex((ip, port))
+        s.close()
+        return port, "Terbuka" if result == 0 else "Tertutup"
+    except:
+        return port, "Tertutup"
+
+def convert_to_degrees(value):
+    try:
+        d = float(value[0])
+        m = float(value[1])
+        s = float(value[2])
+        return d + (m / 60.0) + (s / 3600.0)
+    except Exception:
+        return 0.0
+
+# --- 4. ENDPOINTS / ROUTES ---
+
+# Halaman Utama Dashboard (memuat index.html)
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     if os.path.exists("index.html"):
@@ -22,7 +71,7 @@ def read_root():
             return f.read()
     return """
     <html>
-        <head><title>OSINT Engine</title></head>
+        <head><title>Enterprise OSINT Engine</title></head>
         <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
             <h1>⚠️ File index.html tidak ditemukan!</h1>
             <p>Pastikan file index.html berada di folder yang sama dengan main.py</p>
@@ -30,59 +79,188 @@ def read_root():
     </html>
     """
 
-def get_gps_data(exif_data):
-    """Fungsi ekstraksi GPS presisi tinggi (IFD 34853)"""
-    if not exif_data: 
-        return "-", "-", "-"
-    
-    try:
-        gps_info = exif_data.get_ifd(34853)
-        if not gps_info: 
-            return "-", "-", "-"
+# Endpoint Informasi Developer
+@app.get("/api/developer")
+def get_developer_info():
+    return {
+        "developer": "ZEEO",
+        "signature": "VEKTOR ZERO",
+        "email": "VektorZero0@gmail.com",
+        "whatsapp": "082371729760",
+        "links": {
+            "email_url": "mailto:mishbachachmad07@gmail.com",
+            "wa_url": "https://wa.me/6282371729760"
+        }
+    }
 
-        gps_map = {GPSTAGS.get(k, k): v for k, v in gps_info.items()}
-        lat = gps_map.get("GPSLatitude")
-        lat_ref = gps_map.get("GPSLatitudeRef")
-        lon = gps_map.get("GPSLongitude")
-        lon_ref = gps_map.get("GPSLongitudeRef")
-
-        if lat and lat_ref and lon and lon_ref:
-            lat_val = float(lat[0]) + float(lat[1])/60 + float(lat[2])/3600
-            if lat_ref != 'N': lat_val = -lat_val
-            
-            lon_val = float(lon[0]) + float(lon[1])/60 + float(lon[2])/3600
-            if lon_ref != 'E': lon_val = -lon_val
-            
-            return f"{lat_val:.6f}", f"{lon_val:.6f}", f"https://www.google.com/maps/place/{lat_val},{lon_val}"
-    except Exception:
-        pass
-    
-    return "-", "-", "-"
-
-# 2. RUTE API METADATA
+# Endpoint Metadata File & Ekstraksi GPS Presisi
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
-    temp_filename = f"upload_{file.filename}"
-    with open(temp_filename, "wb") as f:
-        f.write(await file.read())
+    temp_file_path = f"temp_{file.filename}"
+    with open(temp_file_path, "wb") as buffer:
+        buffer.write(await file.read())
     
+    metadata_results = {}
+    lat_val = "-"
+    lon_val = "-"
+    map_link = "-"
+
     try:
-        img = Image.open(temp_filename)
-        exif = img.getexif()
-        lat, lon, link = get_gps_data(exif)
+        image = Image.open(temp_file_path)
+        exifdata = image.getexif()
         
-        img.close()
+        if exifdata:
+            # 1. Baca metadata standar
+            for tag_id in exifdata:
+                tag = TAGS.get(tag_id, tag_id)
+                data = exifdata.get(tag_id)
+                if isinstance(data, bytes):
+                    data = data.decode(errors="ignore")
+                if tag != "GPSInfo":
+                    metadata_results[str(tag)] = str(data)
+
+            # 2. Ekstraksi GPS Khusus (IFD 34853)
+            try:
+                gps_info = exifdata.get_ifd(34853)
+                if gps_info:
+                    gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info}
+                    
+                    lat = gps_data.get("GPSLatitude")
+                    lat_ref = gps_data.get("GPSLatitudeRef")
+                    lon = gps_data.get("GPSLongitude")
+                    lon_ref = gps_data.get("GPSLongitudeRef")
+
+                    if lat and lon and lat_ref and lon_ref:
+                        lat_deg = convert_to_degrees(lat)
+                        if str(lat_ref).upper() != "N":
+                            lat_deg = -lat_deg
+
+                        lon_deg = convert_to_degrees(lon)
+                        if str(lon_ref).upper() != "E":
+                            lon_deg = -lon_deg
+
+                        lat_val = f"{lat_deg:.6f} ({lat_ref})"
+                        lon_val = f"{lon_deg:.6f} ({lon_ref})"
+                        map_link = f"https://www.google.com/maps?q={lat_deg:.6f},{lon_deg:.6f}"
+            except Exception:
+                pass
+        else:
+            metadata_results["Info"] = "Tidak ditemukan data EXIF/Metadata pada gambar ini."
         
-        return {
-            "success": True, 
-            "data": {
-                "Latitude": lat, 
-                "Longitude": lon, 
-                "Google Maps Link": link
-            }
-        }
+        # Simpan hasil GPS
+        metadata_results["Latitude"] = lat_val
+        metadata_results["Longitude"] = lon_val
+        metadata_results["Google Maps Link"] = map_link
+
+        metadata_results["Format File"] = image.format
+        metadata_results["Ukuran Gambar"] = f"{image.width}x{image.height} pixels"
+        metadata_results["Mode Warna"] = image.mode
+        image.close()
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Gagal memproses gambar: {str(e)}")
-    finally:
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
+        metadata_results["Error"] = f"Gagal membaca metadata file: {str(e)}"
+    
+    if os.path.exists(temp_file_path):
+        os.remove(temp_file_path)
+        
+    return {"success": True, "filename": file.filename, "metadata": metadata_results}
+
+# Endpoint Scan Target OSINT
+@app.get("/api/scan")
+def scan_target(target: str):
+    target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    
+    if not target:
+        raise HTTPException(status_code=400, detail="Target tidak boleh kosong.")
+
+    ip_address = "Tidak ditemukan"
+    http_status = "Offline / Down"
+    server_info = "Tidak diketahui"
+    registrar = "Tidak diketahui"
+    creation_date = "Tidak diketahui"
+    dns_records = []
+
+    try:
+        ip_address = socket.gethostbyname(target)
+    except socket.gaierror:
+        ip_address = "Gagal meresolusi DNS"
+
+    try:
+        response = requests.get(f"https://{target}", timeout=4)
+        http_status = f"Online ({response.status_code} OK)"
+        server_info = response.headers.get("Server", "Cloudflare / Protected")
+    except:
+        try:
+            response = requests.get(f"http://{target}", timeout=4)
+            http_status = f"Online HTTP ({response.status_code} OK)"
+            server_info = response.headers.get("Server", "Tidak diketahui")
+        except:
+            http_status = "Offline / Ports Blocked"
+
+    try:
+        w = whois.whois(target)
+        registrar = str(w.registrar) if w.registrar else "Tidak diketahui"
+        creation_date = str(w.creation_date[0] if isinstance(w.creation_date, list) else w.creation_date)
+    except:
+        registrar = "Data Whois diproteksi / Privat"
+        creation_date = "Tidak tersedia"
+
+    try:
+        answers = dns.resolver.resolve(target, 'A')
+        for rdata in answers:
+            dns_records.append(str(rdata))
+    except:
+        pass
+
+    ports_to_check = [21, 22, 53, 80, 443, 3306, 8080]
+    port_results = {}
+    if ip_address != "Gagal meresolusi DNS" and ip_address != "Tidak ditemukan":
+        with ThreadPoolExecutor(max_workers=7) as executor:
+            futures = [executor.submit(check_single_port, ip_address, p) for p in ports_to_check]
+            for future in futures:
+                p, status = future.result()
+                port_results[str(p)] = status
+
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        conn = sqlite3.connect("osint_history.db")
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO scan_logs (target, ip_address, status, checked_at) VALUES (?, ?, ?, ?)",
+                       (target, ip_address, http_status, current_time))
+        conn.commit()
+        conn.close()
+    except:
+        pass
+
+    result_data = {
+        "target": target,
+        "ip_address": ip_address,
+        "status": http_status,
+        "web_server": server_info,
+        "registrar": registrar,
+        "creation_date": creation_date,
+        "dns_records": dns_records,
+        "ports": port_results,
+        "checked_at": current_time
+    }
+
+    return {"success": True, "data": result_data}
+
+# Endpoint Riwayat Scan
+@app.get("/api/history")
+def get_history():
+    conn = sqlite3.connect("osint_history.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT target, ip_address, status, checked_at FROM scan_logs ORDER BY id DESC LIMIT 10")
+    rows = cursor.fetchall()
+    conn.close()
+    
+    history = []
+    for row in rows:
+        history.append({
+            "target": row[0],
+            "ip_address": row[1],
+            "status": row[2],
+            "checked_at": row[3]
+        })
+    return {"success": True, "history": history}
