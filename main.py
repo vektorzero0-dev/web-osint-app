@@ -77,7 +77,7 @@ def get_developer_info():
     return {
         "developer": "ZEEO",
         "signature": "VEKTOR ZERO",
-        "email": "mishbachachmad07@gmail.com",
+        "email": "VektorZero0@gmail.com",
         "whatsapp": "082371729760",
         "links": {
             "email_url": "mailto:mishbachachmad07@gmail.com",
