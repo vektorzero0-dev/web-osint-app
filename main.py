@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 import requests
 import socket
 import whois
@@ -11,7 +12,7 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 import os
 
-# --- 1. INISIALISASI APP HARUS DI SINI (PALING ATAS SEBELUM DEKORATOR) ---
+# --- 1. INISIALISASI APP ---
 app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="3.0")
 
 app.add_middleware(
@@ -21,31 +22,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# Tambahkan ini di main.py setelah inisialisasi 'app'
 
-@app.get("/api/developer")
-def get_developer_info():
-    return {
-        "developer": "ZEEO",
-        "signature": "VEKTOR ZERO",
-        "email": "mishbachachmad07@gmail.com",
-        "whatsapp": "082371729760",
-        "links": {
-            "email_url": "mailto:mishbachachmad07@gmail.com",
-            "wa_url": "https://wa.me/6282371729760"
-        }
-    }
-
-@app.get("/")
-def read_root():
-    return {
-        "status": "online",
-        "message": "Enterprise OSINT Engine v3.0 Active",
-        "powered_by": "VEKTOR ZERO",
-        "developer": "ZEEO"
-    }
-# --- 2. SETELAH ITU BARU FUNGSI-FUNGSI DAN DEKORATOR (@app.get / @app.post) ---
-
+# --- 2. DATABASE INITIALIZATION ---
 def init_db():
     conn = sqlite3.connect("osint_history.db")
     cursor = conn.cursor()
@@ -63,6 +41,7 @@ def init_db():
 
 init_db()
 
+# --- 3. UTILITIES ---
 def check_single_port(ip: str, port: int):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,10 +52,40 @@ def check_single_port(ip: str, port: int):
     except:
         return port, "Tertutup"
 
-@app.get("/")
-def read_root():
-    return {"status": "online", "message": "Enterprise OSINT Engine v3.0 Active"}
+# --- 4. ENDPOINTS / ROUTES ---
 
+# Halaman Utama: Memuat Tampilan Dashboard (index.html)
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    return """
+    <html>
+        <head><title>Enterprise OSINT Engine</title></head>
+        <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
+            <h1>⚠️ File index.html tidak ditemukan!</h1>
+            <p>Pastikan file index.html berada di folder yang sama dengan main.py</p>
+            <p>Atau akses dokumentasi API di <a href="/docs" style="color: #f43f5e;">/docs</a></p>
+        </body>
+    </html>
+    """
+
+# Endpoint Informasi Developer
+@app.get("/api/developer")
+def get_developer_info():
+    return {
+        "developer": "ZEEO",
+        "signature": "VEKTOR ZERO",
+        "email": "mishbachachmad07@gmail.com",
+        "whatsapp": "082371729760",
+        "links": {
+            "email_url": "mailto:mishbachachmad07@gmail.com",
+            "wa_url": "https://wa.me/6282371729760"
+        }
+    }
+
+# Endpoint Metadata File
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -108,6 +117,7 @@ async def extract_metadata(file: UploadFile = File(...)):
         
     return {"success": True, "filename": file.filename, "metadata": metadata_results}
 
+# Endpoint Scan Target OSINT
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -189,6 +199,7 @@ def scan_target(target: str):
 
     return {"success": True, "data": result_data}
 
+# Endpoint Riwayat Scan
 @app.get("/api/history")
 def get_history():
     conn = sqlite3.connect("osint_history.db")
