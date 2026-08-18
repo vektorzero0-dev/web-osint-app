@@ -102,11 +102,11 @@
             </div>
         </section>
 
-        <!-- CARD 2: WHOIS / DNS Intelligence (Placeholder fitur lengkap Anda) -->
+        <!-- CARD 2: WHOIS / DNS Intelligence -->
         <section class="glass-card p-6 rounded-2xl transition duration-300">
             <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
                 <h2 class="text-base font-bold font-orbitron text-emerald-400 flex items-center gap-2">
-                    <span>🌐</span> DOMAIN & IP RECON
+                    <span>🔍</span> DOMAIN & IP RECON
                 </h2>
                 <span class="text-xs text-slate-500 font-mono">WHOIS / DNS LOOKUP</span>
             </div>
@@ -140,7 +140,7 @@
             </div>
             <div class="flex items-center gap-3">
                 <a href="mailto:mishbachachmad07@gmail.com" class="bg-red-500/10 border border-red-500/30 hover:bg-red-600 hover:border-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
-                    <span>📧</span> Email Developer
+                    <span>✉️</span> Email Developer
                 </a>
                 <a href="https://wa.me/6282371729760" target="_blank" class="bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-600 hover:border-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
                     <span>💬</span> WhatsApp Developer
@@ -151,6 +151,9 @@
 
     <!-- JavaScript Integrasi Backend -->
     <script>
+        // Menggunakan URL kosong agar otomatis mengikuti domain tempat web dibuka (Lokal maupun Render)
+        const API_BASE = "";
+
         async function uploadAndAnalyzeMetadata() {
             const fileInput = document.getElementById('metaFile');
             const metaResultContainer = document.getElementById('metaResultContainer');
@@ -169,7 +172,7 @@
             metaResultContainer.classList.remove('hidden');
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/metadata', {
+                const response = await fetch(`${API_BASE}/api/metadata`, {
                     method: 'POST',
                     body: formData
                 });
@@ -199,14 +202,33 @@
             }
         }
 
-        function runDomainLookup() {
-            const domain = document.getElementById('domainInput').value;
+        async function runDomainLookup() {
+            const domain = document.getElementById('domainInput').value.trim();
+            const resultContainer = document.getElementById('domainResultContainer');
+            const resultText = document.getElementById('domainResultText');
+
             if(!domain) {
                 alert('Masukkan target domain terlebih dahulu.');
                 return;
             }
-            document.getElementById('domainResultContainer').classList.remove('hidden');
-            document.getElementById('domainResultText').textContent = `[+] Menginisialisasi modul pencarian untuk target: ${domain}...\n[+] Menghubungkan ke server DNS/WHOIS...\n[Status] Siap dihubungkan ke endpoint backend Anda.`;
+
+            resultContainer.classList.remove('hidden');
+            resultText.textContent = `[+] Menginisialisasi modul pencarian untuk target: ${domain}...\n[+] Menghubungkan ke server DNS/WHOIS backend...\n`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/scan?target=${encodeURIComponent(domain)}`);
+                const json = await response.json();
+
+                if(json.success) {
+                    const data = json.data;
+                    resultText.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultText.textContent = `[Error] Gagal memindai target.`;
+                }
+            } catch (error) {
+                console.error(error);
+                resultText.textContent = `[Error] Terjadi kesalahan koneksi ke server backend.`;
+            }
         }
     </script>
 </body>
