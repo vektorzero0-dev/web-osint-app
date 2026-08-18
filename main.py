@@ -88,7 +88,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File (Tanpa Simulasi GPS, jika kosong bernilai '-')
+# Endpoint Metadata File (Tanpa Simulasi, Bernilai '-' jika kosong)
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
@@ -262,4 +262,3 @@ def get_history():
             "checked_at": row[3]
         })
     return {"success": True, "history": history}
-```[cite: 2]
