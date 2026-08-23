@@ -1,7 +1,9 @@
 fastapi
 uvicorn
-python-multipart
 requests
 python-whois
 dnspython
 Pillow
+pypdf
+python-docx
+openpyxl
