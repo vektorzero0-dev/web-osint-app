@@ -234,6 +234,43 @@ def recon_email(email: str):
         "has_mail_server": len(mx_records) > 0
     }
 
+@app.get("/api/recon/phone")
+def recon_phone(phone: str):
+    clean_phone = re.sub(r'[^\d+]', '', phone.strip())
+    if not clean_phone or len(clean_phone) < 7:
+        return {"success": False, "message": "Nomor telepon tidak valid (minimal 7 digit)."}
+    
+    country_info = "Unknown"
+    if clean_phone.startswith("+62") or clean_phone.startswith("08"):
+        country_info = "Indonesia (+62)"
+    elif clean_phone.startswith("+1"):
+        country_info = "United States / Canada (+1)"
+    elif clean_phone.startswith("+44"):
+        country_info = "United Kingdom (+44)"
+    elif clean_phone.startswith("+61"):
+        country_info = "Australia (+61)"
+    elif clean_phone.startswith("+65"):
+        country_info = "Singapore (+65)"
+    elif clean_phone.startswith("+91"):
+        country_info = "India (+91)"
+
+    search_query = requests.utils.quote(clean_phone)
+    leak_sources = {
+        "Google OSINT Search": f"https://www.google.com/search?q=%22{search_query}%22",
+        "HaveIBeenPwned Search": f"https://haveibeenpwned.com/search?q={search_query}",
+        "DeHashed Lookup": f"https://www.dehashed.com/search?query=%22{search_query}%22",
+        "Sync.me Directory": f"https://sync.me/search/?number={search_query}"
+    }
+
+    return {
+        "success": True,
+        "raw_phone": phone,
+        "formatted_phone": clean_phone,
+        "country_detected": country_info,
+        "leak_check_links": leak_sources,
+        "leak_status_recommendation": "Gunakan tautan OSINT di atas untuk memeriksa jejak nomor pada dump data breach publik."
+    }
+
 @app.get("/api/recon/dns-enum")
 def recon_dns_enum(domain: str):
     domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
