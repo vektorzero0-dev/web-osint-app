@@ -3,316 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEKTOR ZERO | Enterprise OSINT Intelligence Suite</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>VEKTOR ZERO - Enterprise OSINT Suite</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@500;700;900&display=swap');
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #111827;
+            --border-color: #1f2937;
+            --primary-blue: #2563eb;
+            --cyan-accent: #38bdf8;
+            --green-accent: #10b981;
+            --amber-accent: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
 
         body {
-            font-family: 'JetBrains+Mono', monospace;
-            background-color: #030712;
-            color: #f3f4f6;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
         }
 
-        .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
+        .container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .neon-glow {
-            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+        .header {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .glass-card {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        .title-box h1 {
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin: 0;
+            color: var(--cyan-accent);
         }
 
-        .glass-card:hover {
-            border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        .title-box span {
+            font-size: 11px;
+            color: var(--text-muted);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #030712; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+        .status-badge {
+            font-size: 11px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--green-accent);
+            border: 1px solid var(--green-accent);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .card-header h2 {
+            font-size: 16px;
+            margin: 0;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="file"] {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--cyan-accent);
+        }
+
+        .btn {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .result-box {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #d1d5db;
+            overflow-x: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .hash-box {
+            background: #0f172a;
+            border-left: 3px solid var(--amber-accent);
+            padding: 8px 12px;
+            font-size: 11px;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+
+        .links-flex {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .osint-btn {
+            background: #0284c7;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .osint-btn:hover {
+            background: #0369a1;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+<body>
 
-    <!-- Top Security Banner / Navbar -->
-    <header class="glass-card border-b border-blue-900/40 sticky top-0 z-50 px-6 py-4">
-        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="w-3 h-3 bg-blue-500 rounded-full animate-ping"></div>
-                <h1 class="text-xl font-black tracking-widest font-orbitron text-blue-400 neon-glow">
-                    VEKTOR <span class="text-white">ZERO</span>
-                </h1>
-                <span class="text-xs bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded font-mono">v3.0 SECURE</span>
-            </div>
-            
-            <div class="flex items-center space-x-4 text-xs font-mono">
-                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                    <span class="text-slate-400">OPERATOR:</span>
-                    <span class="text-emerald-400 font-bold tracking-wider">ZEEO</span>
-                </div>
-                <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span class="text-slate-300">SYSTEM ONLINE</span>
-                </div>
-            </div>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div class="title-box">
+            <h1>VEKTOR ZERO</h1>
+            <span>v5.1 SECURE OSINT SUITE</span>
         </div>
-    </header>
+        <div class="status-badge">● SYSTEM ONLINE</div>
+    </div>
 
-    <!-- Main Dashboard Body -->
-    <main class="container mx-auto px-4 py-8 flex-grow grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- CARD 1: File Metadata Analyzer -->
-        <section class="glass-card p-6 rounded-2xl transition duration-300">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-                <h2 class="text-base font-bold font-orbitron text-blue-400 flex items-center gap-2">
-                    <span>📁</span> METADATA & GPS EXTRACTOR
-                </h2>
-                <span class="text-xs text-slate-500 font-mono">EXIF / GPS INSPECTOR</span>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-2">PILIH FILE TARGET (GAMBAR/FOTO)</label>
-                    <input type="file" id="metaFile" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 file:cursor-pointer bg-slate-950/60 border border-slate-800 rounded-xl p-2">
-                </div>
-                <button onclick="uploadAndAnalyzeMetadata()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold tracking-wider py-3 rounded-xl transition shadow-lg shadow-blue-900/30 uppercase font-orbitron">
-                    Jalankan Analisis Metadata & GPS
-                </button>
-            </div>
-            
-            <div id="metaResultContainer" class="hidden mt-6 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs text-slate-400">TARGET FILE:</span>
-                    <span id="metaFilename" class="text-xs text-blue-400 font-bold truncate max-w-[200px]"></span>
-                </div>
-                
-                <!-- Kotak Khusus Informasi GPS jika terdeteksi -->
-                <div id="gpsContainer" class="hidden mb-4 bg-blue-950/40 p-3 rounded-lg border border-blue-500/30">
-                    <span class="text-xs font-bold text-blue-400 block mb-1">📍 KOORDINAT GPS TERDETEKSI:</span>
-                    <div id="gpsContent" class="text-xs text-slate-200 space-y-1"></div>
-                </div>
-
-                <div class="overflow-x-auto max-h-64 overflow-y-auto rounded-lg border border-slate-900">
-                    <table class="w-full text-left text-xs">
-                        <tbody id="metaTableBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- CARD 2: WHOIS / DNS Intelligence -->
-        <section class="glass-card p-6 rounded-2xl transition duration-300">
-            <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-                <h2 class="text-base font-bold font-orbitron text-emerald-400 flex items-center gap-2">
-                    <span>🔍</span> DOMAIN & IP RECON
-                </h2>
-                <span class="text-xs text-slate-500 font-mono">WHOIS / DNS LOOKUP</span>
-            </div>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-2">MASUKKAN TARGET DOMAIN / IP</label>
-                    <input type="text" id="domainInput" placeholder="contoh: target-domain.com" class="w-full bg-slate-950/60 border border-slate-800 text-xs p-3 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-                </div>
-                <button onclick="runDomainLookup()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold tracking-wider py-3 rounded-xl transition shadow-lg shadow-emerald-900/30 uppercase font-orbitron">
-                    Lacak Target Domain
-                </button>
-            </div>
-
-            <div id="domainResultContainer" class="hidden mt-6 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 max-h-64 overflow-y-auto">
-                <div id="domainResultText" class="text-xs font-mono text-emerald-400/90"></div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer Khas VEKTOR ZERO & ZEEO -->
-    <footer class="glass-card border-t border-blue-900/30 py-6 mt-12">
-        <div class="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-            <div>
-                <p class="text-xs text-slate-400 font-mono">
-                    Powered by <strong class="text-white font-orbitron tracking-wider">VEKTOR ZERO</strong> 
-                    <span class="mx-2 text-slate-700">|</span> 
-                    Lead Developer & Architect: <span class="text-blue-400 font-bold">ZEEO</span>
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="mailto:mishbachachmad07@gmail.com" class="bg-red-500/10 border border-red-500/30 hover:bg-red-600 hover:border-red-500 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
-                    <span>✉️</span> Email Developer
-                </a>
-                <a href="https://wa.me/6282371729760" target="_blank" class="bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-600 hover:border-emerald-500 text-emerald-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition duration-300 flex items-center gap-2">
-                    <span>💬</span> WhatsApp Developer
-                </a>
-            </div>
+    <!-- Modul 1: Metadata & File Analysis -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size: 20px;">📁</span>
+            <h2>METADATA & DOCUMENT EXTRACTOR</h2>
         </div>
-    </footer>
+        <div class="input-group">
+            <label>Pilih Berkas Target (Gambar, PDF, DOCX)</label>
+            <input type="file" id="fileInput" onchange="uploadFileForMetadata()">
+        </div>
 
-    <!-- JavaScript Integrasi Backend -->
-    <script>
-        const API_BASE = "";
+        <div id="fileResultContainer" style="display: none;">
+            <!-- Hash Integrity -->
+            <div class="hash-box">
+                <strong style="color: var(--amber-accent);">EVIDENCE HASH (CHAIN OF CUSTODY):</strong><br>
+                <span>MD5: </span><span id="hashMd5" style="color: #a7f3d0;">-</span><br>
+                <span>SHA256: </span><span id="hashSha256" style="color: #a7f3d0;">-</span>
+            </div>
 
-        async function uploadAndAnalyzeMetadata() {
-            const fileInput = document.getElementById('metaFile');
-            const metaResultContainer = document.getElementById('metaResultContainer');
-            const metaTableBody = document.getElementById('metaTableBody');
-            const metaFilename = document.getElementById('metaFilename');
-            const gpsContainer = document.getElementById('gpsContainer');
-            const gpsContent = document.getElementById('gpsContent');
+            <!-- GPS OSINT Links -->
+            <div id="osintLinksContainer" style="display: none; margin-bottom: 10px;">
+                <label style="color: var(--green-accent);">NAVIGASI OSINT GEOLOKASI:</label>
+                <div id="osintLinksList" class="links-flex"></div>
+            </div>
 
-            if (fileInput.files.length === 0) {
-                alert('Silakan pilih file gambar terlebih dahulu.');
-                return;
-            }
+            <!-- Metadata Output -->
+            <label>RAW METADATA OUTPUT:</label>
+            <div id="metadataOutput" class="result-box">Memproses berkas...</div>
+        </div>
+    </div>
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            metaFilename.textContent = fileInput.files[0].name;
-            metaTableBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-500 font-mono animate-pulse">Mengekstrak metadata & GPS file...</td></tr>';
-            metaResultContainer.classList.remove('hidden');
-            gpsContainer.classList.add('hidden');
+    <!-- Modul 2: Domain & IP Recon -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size: 20px;">🔍</span>
+            <h2>DOMAIN & IP RECON</h2>
+        </div>
+        <div class="input-group">
+            <label>Masukkan Target Domain / IP</label>
+            <input type="text" id="targetInput" placeholder="contoh: target-domain.com">
+        </div>
+        <button class="btn" onclick="executeScan()">LACAK TARGET DOMAIN</button>
 
-            try {
-                const response = await fetch(`${API_BASE}/api/metadata`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const json = await response.json();
+        <div id="scanResultContainer" style="display: none;">
+            <div id="scanOutput" class="result-box" style="margin-top: 15px;">Memindai target...</div>
+        </div>
+    </div>
+</div>
 
-                if (json.success) {
-                    metaTableBody.innerHTML = '';
-                    const metadata = json.metadata;
-                    
-                    if (Object.keys(metadata).length === 0) {
-                        metaTableBody.innerHTML = '<tr><td colspan="2" class="p-4 text-center text-slate-500">Tidak ada metadata ditemukan.</td></tr>';
-                        return;
+<script>
+    // 1. Fungsi Unggah & Analisis Metadata Berkas (Fitur 3 & 4)
+    async function uploadFileForMetadata() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const resultContainer = document.getElementById("fileResultContainer");
+        const hashMd5 = document.getElementById("hashMd5");
+        const hashSha256 = document.getElementById("hashSha256");
+        const osintLinksContainer = document.getElementById("osintLinksContainer");
+        const osintLinksList = document.getElementById("osintLinksList");
+        const metadataOutput = document.getElementById("metadataOutput");
+
+        resultContainer.style.display = "block";
+        metadataOutput.textContent = "Sedang mengekstrak metadata dan mengkalkulasi hash...";
+        osintLinksContainer.style.display = "none";
+
+        try {
+            const response = await fetch("/api/metadata", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Tampilkan Hash
+                hashMd5.textContent = data.hashes.md5;
+                hashSha256.textContent = data.hashes.sha256;
+
+                // Tampilkan Link OSINT jika ada data GPS
+                osintLinksList.innerHTML = "";
+                if (data.osint_links && Object.keys(data.osint_links).length > 0) {
+                    osintLinksContainer.style.display = "block";
+                    for (const [key, url] of Object.entries(data.osint_links)) {
+                        const btn = document.createElement("a");
+                        btn.href = url;
+                        btn.target = "_blank";
+                        btn.className = "osint-btn";
+                        btn.textContent = key.replace("_", " ").toUpperCase();
+                        osintLinksList.appendChild(btn);
                     }
-
-                    // Deteksi GPS keys (seperti GPSInfo, Latitude, Longitude, dll)
-                    let gpsDataFound = {};
-                    for (const [key, value] of Object.entries(metadata)) {
-                        const lowerKey = key.toLowerCase();
-                        if (lowerKey.includes('gps') || lowerKey.includes('latitude') || lowerKey.includes('longitude')) {
-                            gpsDataFound[key] = value;
-                        }
-
-                        // Masukkan ke tabel standar
-                        metaTableBody.innerHTML += `
-                            <tr class="border-b border-slate-900/80 hover:bg-slate-900/40">
-                                <td class="p-2.5 font-mono text-slate-400 font-semibold">${key}</td>
-                                <td class="p-2.5 font-mono text-slate-200">${value}</td>
-                            </tr>`;
-                    }
-
-                    // Jika ada data GPS, tampilkan kotak khusus GPS di atas tabel
-                    if (Object.keys(gpsDataFound).length > 0) {
-                        gpsContainer.classList.remove('hidden');
-                        let gpsHtml = '';
-                        for (const [gKey, gVal] of Object.entries(gpsDataFound)) {
-                            gpsHtml += `<div><span class="text-blue-300">${gKey}:</span> ${gVal}</div>`;
-                        }
-                        gpsContent.innerHTML = gpsHtml;
-                    }
-
-                } else {
-                    alert('Gagal memproses metadata.');
                 }
-            } catch (error) {
-                console.error(error);
-                alert('Terjadi kesalahan koneksi ke server backend.');
+
+                // Tampilkan Metadata JSON
+                metadataOutput.textContent = JSON.stringify(data.metadata, null, 2);
+            } else {
+                metadataOutput.textContent = "[Error] Gagal meng-ekstrak metadata berkas.";
             }
+        } catch (error) {
+            console.error(error);
+            metadataOutput.textContent = "[Error] Terjadi kesalahan koneksi ke server backend.";
+        }
+    }
+
+    // 2. Fungsi Pemindaian Domain & IP
+    async function executeScan() {
+        const targetInput = document.getElementById("targetInput").value.trim();
+        const scanResultContainer = document.getElementById("scanResultContainer");
+        const scanOutput = document.getElementById("scanOutput");
+
+        if (!targetInput) {
+            alert("Harap masukkan target domain atau IP!");
+            return;
         }
 
-        async function runDomainLookup() {
-            const domain = document.getElementById('domainInput').value.trim();
-            const resultContainer = document.getElementById('domainResultContainer');
-            const resultText = document.getElementById('domainResultText');
+        scanResultContainer.style.display = "block";
+        scanOutput.textContent = `[+] Memulai investigasi pada target: ${targetInput}...\nMohon tunggu...`;
 
-            if(!domain) {
-                alert('Masukkan target domain terlebih dahulu.');
-                return;
+        try {
+            const response = await fetch(`/api/scan?target=${encodeURIComponent(targetInput)}`);
+            const result = await response.json();
+
+            if (result.success) {
+                scanOutput.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                scanOutput.textContent = `[Error] Gagal memindai target.`;
             }
-
-            resultContainer.classList.remove('hidden');
-            resultText.innerHTML = `<span class="text-slate-500 animate-pulse">[+] Menghubungkan ke server OSINT dan melacak target: ${domain}...</span>`;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/scan?target=${encodeURIComponent(domain)}`);
-                const json = await response.json();
-
-                if(json.success) {
-                    const d = json.data;
-                    
-                    let htmlOutput = `
-<div class="space-y-3 font-mono text-xs">
-    <div class="border-b border-emerald-900/50 pb-2 flex justify-between items-center">
-        <span class="text-slate-400">TARGET:</span>
-        <span class="text-white font-bold">${d.target}</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-slate-400">IP ADDRESS:</span>
-        <span class="text-emerald-300 font-bold">${d.ip_address}</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-slate-400">STATUS HTTP:</span>
-        <span class="text-blue-400">${d.status}</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-slate-400">WEB SERVER:</span>
-        <span class="text-yellow-400">${d.web_server}</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-slate-400">REGISTRAR:</span>
-        <span class="text-slate-200">${d.registrar}</span>
-    </div>
-    <div class="flex justify-between items-center">
-        <span class="text-slate-400">CREATION DATE:</span>
-        <span class="text-slate-300">${d.creation_date}</span>
-    </div>
-    
-    <div class="pt-2 border-t border-emerald-900/50">
-        <span class="text-slate-400 block mb-1">DNS RECORDS:</span>
-        <div class="bg-slate-900/90 p-2 rounded border border-emerald-900/30 text-emerald-300">
-            ${d.dns_records.length > 0 ? d.dns_records.join('<br>') : 'Tidak ada data DNS'}
-        </div>
-    </div>
-
-    <div class="pt-2 border-t border-emerald-900/50">
-        <span class="text-slate-400 block mb-1">PORT SCANNING:</span>
-        <div class="grid grid-cols-2 gap-2">
-`;
-                    
-                    for (const [port, status] of Object.entries(d.ports)) {
-                        const statusColor = status === "Terbuka" ? "text-emerald-400 font-bold" : "text-slate-500";
-                        htmlOutput += `<div class="bg-slate-900/60 p-1.5 rounded border border-slate-800 flex justify-between"><span>Port ${port}:</span> <span class="${statusColor}">${status}</span></div>`;
-                    }
-
-                    htmlOutput += `
-        </div>
-    </div>
-    <div class="text-right text-[10px] text-slate-500 pt-2">
-        Checked at: ${d.checked_at}
-    </div>
-</div>`;
-
-                    resultText.innerHTML = htmlOutput;
-                } else {
-                    resultText.textContent = `[Error] Gagal memindai target.`;
-                }
-            } catch (error) {
-                console.error(error);
-                resultText.textContent = `[Error] Terjadi kesalahan koneksi ke server backend.`;
-            }
+        } catch (error) {
+            console.error(error);
+            scanOutput.textContent = `[Error] Terjadi kesalahan koneksi ke server backend.`;
         }
-    </script>
+    }
+</script>
+
 </body>
 </html>
