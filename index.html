@@ -436,7 +436,7 @@
         <div id="tab-phone" class="card tab-content" style="display:none;">
             <div class="card-title">📱 PHONE NUMBER LEAK & BREACH CHECK</div>
             <div class="input-group">
-                <input type="text" id="phoneInput" placeholder="Masukkan Nomor Telepon (contoh: +628123456789)">
+                <input type="text" id="phoneInput" placeholder="Masukkan Nomor Telepon (contoh: 08123456789 atau +628123456789)">
                 <button class="btn-action" onclick="processPhone()">CHECK LEAK</button>
             </div>
             <div id="phoneResult"></div>
@@ -505,8 +505,7 @@
             const data = await res.json();
             let rows = "";
             data.results.forEach(r => {
-                const badge = r.status === 'FOUND' ? '<span class="badge badge-success">FOUND</span>' : '<span class="badge badge-danger">NOT FOUND</span>';
-                rows += `<tr><td><strong>${r.platform}</strong></td><td>${badge}</td><td><a href="${r.url}" target="_blank" class="link-btn">Visit ↗</a></td></tr>`;
+                rows += `<tr><td><strong>${r.platform}</strong></td><td><span class="badge badge-purple">SEARCH LINK</span></td><td><a href="${r.url}" target="_blank" class="link-btn">Visit ↗</a></td></tr>`;
             });
             resBox.innerHTML = `<table class="data-table"><thead><tr><th>Platform</th><th>Status</th><th>Link</th></tr></thead><tbody>${rows}</tbody></table>`;
             log(`Username enumeration complete for: ${u}`);
