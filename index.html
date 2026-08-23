@@ -29,13 +29,18 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg tracking-wider text-white mono">ZEEO <span class="text-blue-500">OSINT</span></h1>
-                    <p class="text-xs text-gray-400">Cyber Intelligence & Recon Platform v11.0</p>
+                    <p class="text-xs text-gray-400">Developed by <span class="text-blue-400 font-semibold">ZEEO</span></p>
                 </div>
             </div>
+            
+            <!-- Tombol Kontak Developer di Header -->
             <div class="flex items-center space-x-2">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> SYSTEM ONLINE
-                </span>
+                <a href="https://wa.me/6282371729760" target="_blank" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
+                    <span>💬 WhatsApp</span>
+                </a>
+                <a href="mailto:vektorzero0@gmail.com" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
+                    <span>✉️ Email</span>
+                </a>
             </div>
         </div>
     </header>
@@ -65,7 +70,7 @@
                 </form>
             </div>
 
-            <!-- Modul 2: Target Recon (Port & Server Scan) -->
+            <!-- Modul 2: Target Recon -->
             <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all duration-300">
                 <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl group-hover:bg-purple-600/20 transition-all"></div>
                 <div class="flex items-center space-x-3 mb-4">
@@ -117,8 +122,27 @@
                 <button onclick="clearOutput()" class="text-xs text-gray-400 hover:text-white px-3 py-1 bg-gray-800/50 rounded-lg border border-gray-700/50 transition-colors">Bersihkan Layar</button>
             </div>
             
-            <div id="outputContainer" class="mono text-sm text-gray-300 min-h-[300px] max-h-[500px] overflow-y-auto space-y-4">
+            <div id="outputContainer" class="mono text-sm text-gray-300 min-h-[250px] max-h-[450px] overflow-y-auto space-y-4">
                 <div class="text-gray-500 italic">>> Menunggu instruksi eksekusi perintah... Silakan pilih modul di atas.</div>
+            </div>
+        </div>
+
+        <!-- Kartu Developer / Informasi Pembuat -->
+        <div class="glass-panel rounded-2xl p-6 border border-gray-800 text-center space-y-4">
+            <div class="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-full mb-1">
+                <span class="text-2xl">⚡</span>
+            </div>
+            <h3 class="text-lg font-bold text-white">Dikembangkan oleh <span class="text-blue-500">ZEEO</span></h3>
+            <p class="text-xs text-gray-400 max-w-xl mx-auto">
+                Platform ZEEO OSINT ini dirancang untuk membantu analisis intelijen siber, forensik digital, serta audit keamanan informasi secara aman dan terstruktur.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 pt-2">
+                <a href="https://wa.me/6282371729760" target="_blank" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all flex items-center space-x-2">
+                    <span>💬 Hubungi Developer via WhatsApp</span>
+                </a>
+                <a href="mailto:vektorzero0@gmail.com" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2">
+                    <span>✉️ Kirim Email Kebijakan / Bug Report</span>
+                </a>
             </div>
         </div>
 
@@ -126,8 +150,9 @@
 
     <!-- Footer -->
     <footer class="glass-panel border-t border-gray-800 mt-auto py-6">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500">
-            ZEEO OSINT Framework &bull; Designed for Security Analysis & Authorized Auditing Only.
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500 space-y-1">
+            <p>© ZEEO Framework &bull; Developed & Maintained by <span class="text-gray-400 font-medium">ZEEO</span></p>
+            <p class="text-gray-600">Designed for Authorized Cyber Security Analysis & Digital Forensics Only.</p>
         </div>
     </footer>
 
@@ -144,13 +169,13 @@
             output.innerHTML = '<div class="text-gray-500 italic">>> Konsol dibersihkan.</div>';
         }
 
-        // 1. Handler Metadata & Exif Form + Tombol Peta
+        // 1. Handler Metadata & Exif Form
         document.getElementById('metadataForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('fileInput');
             if (!fileInput.files.length) return;
 
-            printLog(`<div class="text-blue-400 animate-pulse">[*] Mengunggah dan memproses metadata berkas di RAM...</div>`);
+            printLog(`<div class="text-blue-400 animate-pulse">[*] Mengunggah dan memproses metadata berkas...</div>`);
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -166,10 +191,9 @@
                             <div class="p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-xl my-4">
                                 <p class="text-emerald-400 font-bold mb-3 text-sm">📍 Koordinat GPS Ditemukan: ${data.maps.latitude}, ${data.maps.longitude}</p>
                                 <div class="flex flex-wrap gap-3">
-                                    <a href="${data.maps.google_maps}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center space-x-1">🗺️ Google Maps</a>
-                                    <a href="${data.maps.google_earth}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center space-x-1">🌍 Google Earth</a>
-                                    <a href="${data.maps.openstreetmap}" target="_blank" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center space-x-1">🗺️ OpenStreetMap</a>
-                                    <a href="${data.maps.suncalc_osint}" target="_blank" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition-colors flex items-center space-x-1">☀️ SunCalc OSINT</a>
+                                    <a href="${data.maps.google_maps}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🗺️ Google Maps</a>
+                                    <a href="${data.maps.google_earth}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🌍 Google Earth</a>
+                                    <a href="${data.maps.openstreetmap}" target="_blank" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🗺️ OpenStreetMap</a>
                                 </div>
                             </div>
                         `;
@@ -193,7 +217,7 @@
                         </div>
                     `);
                 } else {
-                    printLog(`<div class="text-red-400">[-] Gagal memproses metadata.</div>`);
+                    printLog(`<div class="text-red-400">[-] Error: ${data.message || 'Gagal memproses file.'}</div>`);
                 }
             } catch (err) {
                 printLog(`<div class="text-red-400">[-] Error Koneksi: ${err.message}</div>`);
@@ -204,7 +228,7 @@
         document.getElementById('scanForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const target = document.getElementById('targetInput').value.trim();
-            printLog(`<div class="text-purple-400 animate-pulse">[*] Memindai target ${target} (Port & Server Audit)...</div>`);
+            printLog(`<div class="text-purple-400 animate-pulse">[*] Memindai target ${target}...</div>`);
 
             try {
                 const res = await fetch(`/api/scan?target=${encodeURIComponent(target)}`);
@@ -219,8 +243,6 @@
                             <div class="grid grid-cols-2 gap-4 text-xs bg-gray-900/50 p-3 rounded-xl border border-gray-800">
                                 <div>IP Address: <span class="text-white font-semibold">${d.ip_address}</span></div>
                                 <div>Status Web: <span class="text-white font-semibold">${d.status}</span></div>
-                                <div>Web Server: <span class="text-white font-semibold">${d.web_server}</span></div>
-                                <div>Waktu Cek: <span class="text-white font-semibold">${d.checked_at}</span></div>
                             </div>
                             <div class="text-xs font-semibold text-gray-400">Port Status:</div>
                             <div class="flex flex-wrap gap-2">${portsHtml}</div>
@@ -236,7 +258,7 @@
         document.getElementById('usernameForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const uname = document.getElementById('usernameInput').value.trim();
-            printLog(`<div class="text-emerald-400 animate-pulse">[*] Mencari jejak username "${uname}" di berbagai platform...</div>`);
+            printLog(`<div class="text-emerald-400 animate-pulse">[*] Mencari jejak username "${uname}"...</div>`);
 
             try {
                 const res = await fetch(`/api/recon/username?username=${encodeURIComponent(uname)}`);
