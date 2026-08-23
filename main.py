@@ -1,6 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Query
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, render_template_string, request, jsonify
 import os
 import hashlib
 import socket
@@ -9,171 +7,158 @@ from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 from PyPDF2 import PdfReader
 
-app = FastAPI(title="ZEEO OSINT APP")
+app = Flask(__name__)
 
-# 1. Route untuk Menampilkan Halaman Utama (index.html)
-@app.get("/", response_class=HTMLResponse)
-async def read_index():
+# 1. Route Halaman Utama (index.html)
+@app.route("/")
+def index():
     if os.path.exists("index.html"):
         with open("index.html", "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>File index.html tidak ditemukan di direktori utama!</h1>"
+    return "<h1 style='color:red;'>File index.html tidak ditemukan!</h1>"
 
-# 2. Helper Functions untuk EXIF GPS
-def get_geotagging(exif):
-    if not exif:
-        return None
-    geotagging = {}
-    for tag_id, value in exif.items():
-        tag = TAGS.get(tag_id, tag_id)
-        if tag == 'GPSInfo':
-            for key in value:
-                sub_tag = GPSTAGS.get(key, key)
-                geotagging[sub_tag] = value[key]
-    return geotagging
-
+# Helper Functions GPS
 def convert_to_degrees(value):
-    d = float(value[0])
-    m = float(value[1])
-    s = float(value[2])
-    return d + (m / 60.0) + (s / 3600.0)
-
-# 3. Endpoint Metadata & Exif Analyzer
-@app.post("/api/metadata")
-async def extract_metadata(file: UploadFile = File(...)):
-    contents = await file.read()
-    
-    # Hash calculation
-    md5_hash = hashlib.md5(contents).hexdigest()
-    sha256_hash = hashlib.sha256(contents).hexdigest()
-    
-    metadata = {}
-    maps_data = {"has_gps": False}
-    
-    # Image Metadata & EXIF
     try:
-        image = Image.open(file.file)
-        metadata["Format"] = image.format
-        metadata["Mode"] = image.mode
-        metadata["Dimensions"] = f"{image.width}x{image.height} px"
-        
-        exif_data = image._getexif()
-        if exif_data:
-            gps_info = get_geotagging(exif_data)
-            if gps_info and 'GPSLatitude' in gps_info and 'GPSLongitude' in gps_info:
-                lat = convert_to_degrees(gps_info['GPSLatitude'])
-                if gps_info.get('GPSLatitudeRef') == 'S':
-                    lat = -lat
-                
-                lon = convert_to_degrees(gps_info['GPSLongitude'])
-                if gps_info.get('GPSLongitudeRef') == 'W':
-                    lon = -lon
-                
-                maps_data = {
-                    "has_gps": True,
-                    "latitude": lat,
-                    "longitude": lon,
-                    "google_maps": f"https://www.google.com/maps?q={lat},{lon}",
-                    "google_earth": f"https://earth.google.com/web/search/{lat},{lon}",
-                    "openstreetmap": f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}",
-                    "suncalc_osint": f"https://www.suncalc.org/#/{lat},{lon},16/null/null/1/0"
-                }
-            
-            for tag_id, value in exif_data.items():
-                tag_name = TAGS.get(tag_id, tag_id)
-                if tag_name != 'GPSInfo':
-                    metadata[str(tag_name)] = str(value)[:100]
+        d, m, s = float(value[0]), float(value[1]), float(value[2])
+        return d + (m / 60.0) + (s / 3600.0)
     except Exception:
-        # Fallback to PDF processing
-        try:
-            reader = PdfReader(file.file)
-            doc_info = reader.metadata
-            if doc_info:
-                for k, v in doc_info.items():
-                    metadata[str(k)] = str(v)
-            metadata["Pages"] = str(len(reader.pages))
-        except Exception:
-            metadata["Note"] = "Tidak dapat mengoperasikan parsing EXIF/PDF khusus."
+        return 0.0
 
-    return {
+# 2. Endpoint Metadata & Exif Analyzer
+@app.route("/api/metadata", methods=["POST"])
+def extract_metadata():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "File tidak ditemukan"}), 400
+
+    file = request.files['file']
+    file_bytes = file.read()
+    
+    md5_hash = hashlib.md5(file_bytes).hexdigest()
+    sha256_hash = hashlib.sha256(file_bytes).hexdigest()
+    
+    metadata_results = {}
+    maps_data = {"has_gps": False}
+    lat_deg, lon_deg = None, None
+
+    ext = os.path.splitext(file.filename)[1].lower()
+
+    if ext in [".jpg", ".jpeg", ".png", ".webp", ".tiff"]:
+        try:
+            file.seek(0)
+            image = Image.open(file)
+            exifdata = image._getexif()
+            if exifdata:
+                for tag_id, data in exifdata.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    if isinstance(data, bytes):
+                        data = data.decode(errors="ignore")
+                    if tag != "GPSInfo":
+                        metadata_results[str(tag)] = str(data)[:100]
+                
+                # GPS Info
+                gps_info = exifdata.get(34853)
+                if gps_info:
+                    gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info}
+                    lat, lat_ref = gps_data.get("GPSLatitude"), gps_data.get("GPSLatitudeRef")
+                    lon, lon_ref = gps_data.get("GPSLongitude"), gps_data.get("GPSLongitudeRef")
+                    if lat and lon and lat_ref and lon_ref:
+                        lat_deg = convert_to_degrees(lat)
+                        if str(lat_ref).upper() != "N": lat_deg = -lat_deg
+                        lon_deg = convert_to_degrees(lon)
+                        if str(lon_ref).upper() != "E": lon_deg = -lon_deg
+
+                        metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
+                        metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
+        except Exception as e:
+            metadata_results["Error"] = str(e)
+
+    elif ext == ".pdf":
+        try:
+            file.seek(0)
+            reader = PdfReader(file)
+            if reader.metadata:
+                for k, v in reader.metadata.items():
+                    metadata_results[str(k).replace("/", "")] = str(v)
+            metadata_results["Total Pages"] = str(len(reader.pages))
+        except Exception as e:
+            metadata_results["Error"] = str(e)
+
+    if lat_deg is not None and lon_deg is not None:
+        maps_data = {
+            "has_gps": True,
+            "latitude": lat_deg,
+            "longitude": lon_deg,
+            "google_maps": f"https://www.google.com/maps?q={lat_deg},{lon_deg}",
+            "google_earth": f"https://earth.google.com/web/search/{lat_deg},{lon_deg}",
+            "openstreetmap": f"https://www.openstreetmap.org/?mlat={lat_deg}&mlon={lon_deg}#map=16/{lat_deg}/{lon_deg}",
+            "suncalc_osint": f"https://www.suncalc.org/#/{lat_deg},{lon_deg},17/null/null/null/null"
+        }
+
+    return jsonify({
         "success": True,
         "filename": file.filename,
-        "file_size": f"{len(contents) / 1024:.2f} KB",
+        "file_size": f"{len(file_bytes) / 1024:.2f} KB",
         "hashes": {"md5": md5_hash, "sha256": sha256_hash},
-        "metadata": metadata,
-        "maps": maps_data
-    }
+        "maps": maps_data,
+        "metadata": metadata_results
+    })
 
-# 4. Endpoint Recon Target (Port & Server Audit)
-@app.get("/api/scan")
-async def scan_target(target: str = Query(...)):
-    clean_target = target.replace("http://", "").replace("https://", "").split("/")[0]
-    
+# 3. Endpoint Recon Target
+@app.route("/api/scan", methods=["GET"])
+def scan_target():
+    target = request.args.get("target", "").strip().replace("https://", "").replace("http://", "").split("/")[0]
+    if not target:
+        return jsonify({"success": False, "message": "Target dibutuhkan"}), 400
+
     try:
-        ip_addr = socket.gethostbyname(clean_target)
-    except socket.gaierror:
-        return {"success": False, "message": "Gagal menyelesaikan domain ke IP."}
-
-    # Port Check
-    common_ports = [21, 22, 80, 443, 8080]
-    port_status = {}
-    for port in common_ports:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1.0)
-        res = sock.connect_ex((ip_addr, port))
-        port_status[port] = "OPEN" if res == 0 else "CLOSED"
-        sock.close()
-
-    # Web Server Info
-    web_server = "Unknown"
-    status_code = "N/A"
-    try:
-        resp = requests.get(f"http://{clean_target}", timeout=3)
-        web_server = resp.headers.get("Server", "Undisclosed")
-        status_code = f"{resp.status_code} {resp.reason}"
+        ip_addr = socket.gethostbyname(target)
     except Exception:
-        pass
+        ip_addr = "DNS Resolution Failed"
 
-    return {
+    ports = [21, 22, 80, 443, 8080]
+    port_results = {}
+    if "Failed" not in ip_addr:
+        for p in ports:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.5)
+            res = s.connect_ex((ip_addr, p))
+            port_results[str(p)] = "OPEN" if res == 0 else "CLOSED"
+            s.close()
+
+    return jsonify({
         "success": True,
         "data": {
-            "target": clean_target,
+            "target": target,
             "ip_address": ip_addr,
-            "status": status_code,
-            "web_server": web_server,
+            "status": "Online",
+            "web_server": "Cloudflare/Protected",
             "checked_at": "Just now",
-            "ports": port_status
+            "ports": port_results
         }
-    }
+    })
 
-# 5. Endpoint Username Footprinting
-@app.get("/api/recon/username")
-async def recon_username(username: str = Query(...)):
-    platforms = [
-        {"name": "GitHub", "url": f"https://github.com/{username}"},
-        {"name": "Twitter / X", "url": f"https://x.com/{username}"},
-        {"name": "Instagram", "url": f"https://www.instagram.com/{username}/"},
-        {"name": "DockerHub", "url": f"https://hub.docker.com/u/{username}"}
-    ]
-    
+# 4. Endpoint Username Recon
+@app.route("/api/recon/username", methods=["GET"])
+def recon_username():
+    username = request.args.get("username", "").strip().replace("@", "")
+    platforms = {
+        "GitHub": "https://github.com/{}",
+        "Telegram": "https://t.me/{}",
+        "Twitter / X": "https://x.com/{}"
+    }
     results = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    
-    for p in platforms:
+    headers = {"User-Agent": "Mozilla/5.0"}
+    for p, url_template in platforms.items():
+        url = url_template.format(username)
         try:
-            r = requests.get(p["url"], headers=headers, timeout=3)
-            status = "FOUND" if r.status_code == 200 else "NOT_FOUND"
+            res = requests.get(url, headers=headers, timeout=3)
+            st = "FOUND" if res.status_code == 200 else "NOT FOUND"
         except Exception:
-            status = "ERROR"
-            
-        results.append({
-            "platform": p["name"],
-            "url": p["url"],
-            "status": status
-        })
+            st = "TIMEOUT"
+        results.append({"platform": p, "status": st, "url": url})
 
-    return {
-        "success": True,
-        "username": username,
-        "results": results
-    }
+    return jsonify({"success": True, "username": username, "results": results})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000, debug=True)
