@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Query
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import requests
@@ -12,25 +12,19 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import os
 import hashlib
 import re
+import ssl
 
-# Import WHOIS
 try:
     import whois
 except ImportError:
     whois = None
 
-# Import Library Dokumen Opsional
 try:
     import pypdf
 except ImportError:
     pypdf = None
 
-try:
-    import docx
-except ImportError:
-    docx = None
-
-app = FastAPI(title="VEKTOR ZERO - OSINT Cyber Engine", version="7.0")
+app = FastAPI(title="VEKTOR ZERO - Enterprise OSINT Suite v8.0", version="8.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +50,7 @@ def init_db():
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"Warning: Gagal db init: {e}")
+        print(f"Database error: {e}")
 
 init_db()
 
@@ -66,15 +60,13 @@ def check_single_port(ip: str, port: int):
         s.settimeout(0.8)
         res = s.connect_ex((ip, port))
         s.close()
-        return port, "Open" if res == 0 else "Closed"
+        return port, "OPEN" if res == 0 else "CLOSED"
     except Exception:
-        return port, "Closed"
+        return port, "CLOSED"
 
 def convert_to_degrees(value):
     try:
-        d = float(value[0])
-        m = float(value[1])
-        s = float(value[2])
+        d, m, s = float(value[0]), float(value[1]), float(value[2])
         return d + (m / 60.0) + (s / 3600.0)
     except Exception:
         return 0.0
@@ -92,13 +84,13 @@ def check_username_platform(platform: str, url_template: str, username: str):
     try:
         res = requests.get(url, headers=headers, timeout=3)
         if res.status_code == 200:
-            return platform, "Found", url
+            return platform, "FOUND", url
         elif res.status_code == 404:
-            return platform, "Not Found", url
+            return platform, "NOT FOUND", url
         else:
             return platform, f"HTTP {res.status_code}", url
     except Exception:
-        return platform, "Timeout", url
+        return platform, "TIMEOUT", url
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
@@ -107,7 +99,7 @@ def read_root():
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>File index.html tidak ditemukan!</h1>"
+    return "<h1 style='color:red;'>File index.html tidak ditemukan di root directory!</h1>"
 
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
@@ -144,7 +136,7 @@ async def extract_metadata(file: UploadFile = File(...)):
                             metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
                             metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
                 except Exception: pass
-            metadata_results["Dimensions"] = f"{image.width} x {image.height} px"
+            metadata_results["Resolution"] = f"{image.width} x {image.height} px"
             metadata_results["Color Mode"] = image.mode
             image.close()
         except Exception as e: metadata_results["Error"] = str(e)
@@ -182,16 +174,18 @@ async def extract_metadata(file: UploadFile = File(...)):
 @app.get("/api/recon/username")
 def recon_username(username: str):
     username = username.strip().replace("@", "")
-    if not username: raise HTTPException(status_code=400, detail="Empty username")
+    if not username: raise HTTPException(status_code=400, detail="Username empty")
     platforms = {
         "GitHub": "https://github.com/{}",
         "Telegram": "https://t.me/{}",
         "Reddit": "https://www.reddit.com/user/{}",
         "Pinterest": "https://www.pinterest.com/{}",
-        "TikTok": "https://www.tiktok.com/@{}"
+        "TikTok": "https://www.tiktok.com/@{}",
+        "Twitter / X": "https://x.com/{}",
+        "Instagram": "https://instagram.com/{}"
     }
     results = []
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=7) as executor:
         futures = [executor.submit(check_username_platform, p, url, username) for p, url in platforms.items()]
         for f in futures:
             p, st, u = f.result()
@@ -207,25 +201,21 @@ def recon_ip_intel(ip: str):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-# [FITUR BARU 1] Email OSINT & Domain Reputation Analyzer
 @app.get("/api/recon/email")
 def recon_email(email: str):
     email = email.strip()
     regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     is_valid_format = bool(re.match(regex, email))
-    
-    if not is_valid_format:
-        return {"success": False, "message": "Format email tidak valid."}
+    if not is_valid_format: return {"success": False, "message": "Format email tidak valid."}
     
     domain = email.split("@")[1]
-    disposable_domains = ["tempmail.com", "guerrillamail.com", "10minutemail.com", "mailinator.com", "trashmail.com"]
-    is_disposable = domain.lower() in disposable_domains
+    disposable_list = ["tempmail.com", "guerrillamail.com", "10minutemail.com", "mailinator.com", "trashmail.com"]
+    is_disposable = domain.lower() in disposable_list
     
     mx_records = []
     try:
         answers = dns.resolver.resolve(domain, 'MX')
-        for rdata in answers:
-            mx_records.append(str(rdata.exchange))
+        for rdata in answers: mx_records.append(str(rdata.exchange))
     except Exception: pass
 
     return {
@@ -238,21 +228,94 @@ def recon_email(email: str):
         "has_mail_server": len(mx_records) > 0
     }
 
-# [FITUR BARU 2] DNS Security & Record Enumeration
 @app.get("/api/recon/dns-enum")
 def recon_dns_enum(domain: str):
     domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
-    record_types = ['A', 'AAAA', 'MX', 'NS', 'TXT']
+    record_types = ['A', 'AAAA', 'MX', 'NS', 'TXT', 'CNAME']
     dns_data = {}
-    
     for r_type in record_types:
         try:
             answers = dns.resolver.resolve(domain, r_type)
             dns_data[r_type] = [str(rdata) for rdata in answers]
         except Exception:
             dns_data[r_type] = []
-
     return {"success": True, "domain": domain, "records": dns_data}
+
+# [FITUR BARU 1] SSL/TLS Certificate Forensic
+@app.get("/api/recon/ssl-info")
+def recon_ssl(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    try:
+        ctx = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=4) as sock:
+            with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                cert = ssock.getpeercert()
+                issuer = dict(x[0] for x in cert.get('issuer', []))
+                subject = dict(x[0] for x in cert.get('subject', []))
+                san = [item[1] for item in cert.get('subjectAltName', []) if item[0] == 'DNS']
+                
+                return {
+                    "success": True,
+                    "domain": domain,
+                    "issuer_organization": issuer.get('organizationName', 'N/A'),
+                    "common_name": subject.get('commonName', 'N/A'),
+                    "valid_from": cert.get('notBefore'),
+                    "valid_to": cert.get('notAfter'),
+                    "serial_number": cert.get('serialNumber'),
+                    "san_domains": san[:8]
+                }
+    except Exception as e:
+        return {"success": False, "message": f"SSL Handshake gagal: {str(e)}"}
+
+# [FITUR BARU 2] Subdomain Discovery Engine
+def check_subdomain(sub: str, target: str):
+    full_domain = f"{sub}.{target}"
+    try:
+        ip = socket.gethostbyname(full_domain)
+        return {"subdomain": full_domain, "ip": ip, "status": "ACTIVE"}
+    except Exception:
+        return None
+
+@app.get("/api/recon/subdomains")
+def recon_subdomains(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    wordlist = ["www", "mail", "remote", "blog", "webmail", "server", "ns1", "smtp", "secure", "vpn", "api", "dev", "staging", "admin", "portal", "test", "demo", "m"]
+    found = []
+    
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(check_subdomain, sub, domain) for sub in wordlist]
+        for f in futures:
+            res = f.result()
+            if res: found.append(res)
+            
+    return {"success": True, "target": domain, "total_found": len(found), "subdomains": found}
+
+# [FITUR BARU 3] HTTP Security Headers Auditor
+@app.get("/api/recon/security-headers")
+def recon_sec_headers(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    try:
+        res = requests.get(f"https://{domain}", timeout=5)
+        headers = res.headers
+        sec_checks = {
+            "Strict-Transport-Security (HSTS)": "Strict-Transport-Security" in headers,
+            "Content-Security-Policy (CSP)": "Content-Security-Policy" in headers,
+            "X-Frame-Options (Clickjacking)": "X-Frame-Options" in headers,
+            "X-Content-Type-Options": "X-Content-Type-Options" in headers,
+            "Referrer-Policy": "Referrer-Policy" in headers,
+            "Permissions-Policy": "Permissions-Policy" in headers
+        }
+        score = sum(1 for v in sec_checks.values() if v)
+        return {
+            "success": True,
+            "target": domain,
+            "status_code": res.status_code,
+            "security_score": f"{score}/6",
+            "audit_results": sec_checks,
+            "raw_server": headers.get("Server", "Protected/Hidden")
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 @app.get("/api/scan")
 def scan_target(target: str):
@@ -275,10 +338,10 @@ def scan_target(target: str):
             registrar = str(w.registrar) if w.registrar else "Private"
         except Exception: registrar = "Protected"
 
-    ports = [21, 22, 80, 443, 3306, 8080]
+    ports = [21, 22, 80, 443, 3306, 8080, 8443]
     port_results = {}
     if "Failed" not in ip_address:
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=7) as executor:
             futures = [executor.submit(check_single_port, ip_address, p) for p in ports]
             for f in futures:
                 p, st = f.result()
