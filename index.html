@@ -3,85 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEEO OSINT APP // CYBER WAR ROOM v9.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>ZEEO OSINT APP // WAR ROOM v10.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@600;800;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #030712;
-            --panel: rgba(10, 16, 31, 0.85);
+            --panel: rgba(11, 19, 43, 0.75);
             --neon-cyan: #00f3ff;
             --neon-green: #00ff66;
             --neon-red: #ff0055;
             --neon-purple: #bc13fe;
             --neon-yellow: #ffe600;
-            --border: rgba(0, 243, 255, 0.25);
-            --text-primary: #e2e8f0;
-            --text-dim: #64748b;
+            --border: rgba(0, 243, 255, 0.2);
+            --text-primary: #f1f5f9;
+            --text-dim: #94a3b8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Share Tech Mono', monospace; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Fira Code', monospace; }
+
         body {
             background: var(--bg);
             color: var(--text-primary);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            padding: 16px;
             min-height: 100vh;
             background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 80%),
-                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 30px 30px, 30px 30px;
+                radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.08) 0%, transparent 70%),
+                linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 24px 24px, 24px 24px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            flex-direction: column;
+        .layout {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 320px;
             gap: 16px;
         }
 
-        /* Top HUD Header */
+        @media (max-width: 1024px) { .layout { grid-template-columns: 1fr; } }
+
         .hud-header {
+            grid-column: 1 / -1;
             background: var(--panel);
-            border: 1px solid var(--neon-cyan);
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--neon-cyan);
             border-radius: 8px;
-            padding: 16px 24px;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hud-header::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 4px; height: 100%;
-            background: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
         }
 
         .brand h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 22px;
+            font-size: 24px;
             color: var(--neon-cyan);
-            letter-spacing: 3px;
-            text-shadow: 0 0 8px rgba(0,243,255,0.6);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
         }
 
         .brand p { font-size: 11px; color: var(--text-dim); }
 
-        .sys-stats { display: flex; gap: 20px; }
-        .stat-box { text-align: right; }
-        .stat-val { font-size: 14px; color: var(--neon-green); font-weight: bold; }
-        .stat-lbl { font-size: 10px; color: var(--text-dim); }
-
-        /* Navigation Grid */
         .nav-grid {
+            grid-column: 1 / -1;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 8px;
@@ -91,7 +78,7 @@
             background: rgba(15, 23, 42, 0.8);
             border: 1px solid var(--border);
             color: var(--text-dim);
-            padding: 10px 8px;
+            padding: 10px 6px;
             border-radius: 6px;
             font-size: 11px;
             cursor: pointer;
@@ -103,254 +90,297 @@
             background: rgba(0, 243, 255, 0.1);
             color: var(--neon-cyan);
             border-color: var(--neon-cyan);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 12px rgba(0, 243, 255, 0.25);
         }
 
-        /* Workspace Module Card */
         .card {
             background: var(--panel);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-        .card-header {
+        .card-title {
             font-family: 'Orbitron', sans-serif;
             font-size: 14px;
             color: var(--neon-cyan);
             margin-bottom: 16px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             padding-bottom: 8px;
         }
 
         .input-group { display: flex; gap: 10px; margin-bottom: 16px; }
+
         input[type="text"] {
             flex: 1;
-            background: rgba(2, 6, 23, 0.8);
+            background: rgba(2, 6, 23, 0.9);
             border: 1px solid var(--border);
             color: #fff;
-            padding: 12px 14px;
+            padding: 12px;
             border-radius: 6px;
             font-size: 12px;
             outline: none;
         }
+
         input[type="text"]:focus {
             border-color: var(--neon-cyan);
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-        }
-
-        input[type="file"] {
-            background: rgba(2, 6, 23, 0.8);
-            border: 1px dashed var(--border);
-            padding: 16px;
-            border-radius: 6px;
-            color: var(--text-dim);
-            width: 100%;
-            cursor: pointer;
         }
 
         .btn-action {
             background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(0, 243, 255, 0.05));
             color: var(--neon-cyan);
             border: 1px solid var(--neon-cyan);
-            padding: 10px 20px;
+            padding: 10px 18px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            letter-spacing: 1px;
             transition: all 0.2s;
         }
+
         .btn-action:hover {
             background: var(--neon-cyan);
             color: #000;
             box-shadow: 0 0 15px var(--neon-cyan);
         }
 
-        /* Console Output Tables */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
-        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: left; }
-        .data-table th { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        /* Console Table */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
+        .data-table th, .data-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: left; }
+        .data-table th { color: var(--text-dim); text-transform: uppercase; font-size: 10px; }
 
-        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; }
         .badge-success { background: rgba(0, 255, 102, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green); }
         .badge-danger { background: rgba(255, 0, 85, 0.15); color: var(--neon-red); border: 1px solid var(--neon-red); }
         .badge-purple { background: rgba(188, 19, 254, 0.15); color: var(--neon-purple); border: 1px solid var(--neon-purple); }
 
-        .link-btn { display: inline-block; background: rgba(0, 243, 255, 0.1); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 3px 8px; border-radius: 4px; text-decoration: none; font-size: 10px; margin-right: 4px; }
+        /* Terminal Sidebar */
+        .terminal-box {
+            background: rgba(2, 6, 23, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            font-size: 11px;
+        }
+
+        .terminal-logs {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 480px;
+            color: var(--neon-green);
+            line-height: 1.5;
+        }
+
+        .log-entry { margin-bottom: 4px; word-break: break-all; }
+        .log-time { color: var(--text-dim); margin-right: 6px; }
+
+        .link-btn { display: inline-block; background: rgba(0, 243, 255, 0.1); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 2px 6px; border-radius: 4px; text-decoration: none; font-size: 10px; }
         .link-btn:hover { background: var(--neon-cyan); color: #000; }
-        
-        .hash-card { background: rgba(2, 6, 23, 0.9); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 11px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="layout">
     <div class="hud-header">
         <div class="brand">
             <h1>ZEEO OSINT APP</h1>
-            <p>INTELLIGENCE & THREAT OPERATIONS SUITE v9.0 PRO</p>
+            <p>ADVANCED THREAT INTELLIGENCE & RECONNAISSANCE ENGINE v10.0</p>
         </div>
-        <div class="sys-stats">
-            <div class="stat-box">
-                <div class="stat-val">ACTIVE</div>
-                <div class="stat-lbl">CORE ENGINE</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val" style="color:var(--neon-cyan)">9 MODULES</div>
-                <div class="stat-lbl">CAPABILITIES</div>
-            </div>
+        <div style="text-align: right;">
+            <div style="color:var(--neon-green); font-size: 12px; font-weight: bold;">● SYSTEM ONLINE</div>
+            <div style="color:var(--text-dim); font-size: 10px;" id="clock">00:00:00 UTC</div>
         </div>
     </div>
 
     <div class="nav-grid">
-        <button class="nav-btn active" onclick="switchTab('meta')">📁 EXIF / METADATA</button>
-        <button class="nav-btn" onclick="switchTab('user')">👤 SOCIAL RECON</button>
-        <button class="nav-btn" onclick="switchTab('whois')">📋 WHOIS INTEL</button>
-        <button class="nav-btn" onclick="switchTab('domain')">🌐 DOMAIN / PORTS</button>
-        <button class="nav-btn" onclick="switchTab('sub')">🔍 SUBDOMAINS</button>
-        <button class="nav-btn" onclick="switchTab('dns')">📡 DNS RECORDS</button>
-        <button class="nav-btn" onclick="switchTab('ssl')">🔒 SSL FORENSICS</button>
-        <button class="nav-btn" onclick="switchTab('sec')">🛡️ SEC HEADERS</button>
-        <button class="nav-btn" onclick="switchTab('email')">✉️ EMAIL INTEL</button>
+        <button class="nav-btn active" onclick="switchTab('meta', event)">📁 METADATA</button>
+        <button class="nav-btn" onclick="switchTab('user', event)">👤 SOCIAL FOOTPRINT</button>
+        <button class="nav-btn" onclick="switchTab('whois', event)">📋 WHOIS RECON</button>
+        <button class="nav-btn" onclick="switchTab('domain', event)">🌐 DOMAIN & PORTS</button>
+        <button class="nav-btn" onclick="switchTab('sub', event)">🔍 SUBDOMAINS</button>
+        <button class="nav-btn" onclick="switchTab('dorks', event)">🎯 GOOGLE DORKS</button>
+        <button class="nav-btn" onclick="switchTab('ipintel', event)">🌍 IP GEOLOCATION</button>
+        <button class="nav-btn" onclick="switchTab('dns', event)">📡 DNS RECORDS</button>
+        <button class="nav-btn" onclick="switchTab('ssl', event)">🔒 SSL FORENSICS</button>
+        <button class="nav-btn" onclick="switchTab('sec', event)">🛡️ SEC HEADERS</button>
+        <button class="nav-btn" onclick="switchTab('email', event)">✉️ EMAIL RECON</button>
     </div>
 
-    <!-- Modul EXIF Metadata -->
-    <div id="tab-meta" class="card tab-content">
-        <div class="card-header">📁 FILE & EXIF FORENSICS</div>
-        <input type="file" id="fileInput" onchange="processMetadata()">
-        <div id="metaResult" style="display:none; margin-top: 14px;"></div>
-    </div>
-
-    <!-- Modul Username -->
-    <div id="tab-user" class="card tab-content" style="display:none;">
-        <div class="card-header">👤 SOCIAL FOOTPRINT ENUMERATOR</div>
-        <div class="input-group">
-            <input type="text" id="userInput" placeholder="Masukkan Username (contoh: target_username)">
-            <button class="btn-action" onclick="processUsername()">EXECUTE RECON</button>
+    <!-- Main Active Workspace -->
+    <div class="main-content">
+        <!-- Metadata -->
+        <div id="tab-meta" class="card tab-content">
+            <div class="card-title"><span>📁 FILE & EXIF FORENSICS</span></div>
+            <input type="file" id="fileInput" onchange="processMetadata()" style="color:var(--text-dim);">
+            <div id="metaResult" style="margin-top: 12px;"></div>
         </div>
-        <div id="userResult" style="display:none;"></div>
+
+        <!-- Social Recon -->
+        <div id="tab-user" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>👤 SOCIAL MEDIA FOOTPRINT</span></div>
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="Username target (contoh: john_doe)">
+                <button class="btn-action" onclick="processUsername()">ENUMERATE</button>
+            </div>
+            <div id="userResult"></div>
+        </div>
+
+        <!-- WHOIS -->
+        <div id="tab-whois" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>📋 WHOIS DOMAIN INSPECTOR</span></div>
+            <div class="input-group">
+                <input type="text" id="whoisInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processWhois()">INSPECT</button>
+            </div>
+            <div id="whoisResult"></div>
+        </div>
+
+        <!-- Domain & Ports -->
+        <div id="tab-domain" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🌐 DOMAIN & PORT AUDITOR</span></div>
+            <div class="input-group">
+                <input type="text" id="domainInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processDomain()">AUDIT TARGET</button>
+            </div>
+            <div id="domainResult"></div>
+        </div>
+
+        <!-- Subdomains -->
+        <div id="tab-sub" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🔍 SUBDOMAIN ENUMERATOR</span></div>
+            <div class="input-group">
+                <input type="text" id="subInput" placeholder="Domain utama (contoh: target.com)">
+                <button class="btn-action" onclick="processSubdomains()">ENUMERATE</button>
+            </div>
+            <div id="subResult"></div>
+        </div>
+
+        <!-- Google Dorks -->
+        <div id="tab-dorks" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🎯 GOOGLE DORK ENGINE GENERATOR</span></div>
+            <div class="input-group">
+                <input type="text" id="dorkInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processDorks()">GENERATE DORKS</button>
+            </div>
+            <div id="dorkResult"></div>
+        </div>
+
+        <!-- IP Geolocation -->
+        <div id="tab-ipintel" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🌍 IP GEOLOCATION & NETWORK INTEL</span></div>
+            <div class="input-group">
+                <input type="text" id="ipInput" placeholder="IP Address target (contoh: 8.8.8.8)">
+                <button class="btn-action" onclick="processIPIntel()">LOCATE IP</button>
+            </div>
+            <div id="ipResult"></div>
+        </div>
+
+        <!-- DNS Records -->
+        <div id="tab-dns" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>📡 DNS RECORD LOOKUP</span></div>
+            <div class="input-group">
+                <input type="text" id="dnsInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processDNS()">QUERY RECORDS</button>
+            </div>
+            <div id="dnsResult"></div>
+        </div>
+
+        <!-- SSL Forensics -->
+        <div id="tab-ssl" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🔒 SSL CERTIFICATE ANALYZER</span></div>
+            <div class="input-group">
+                <input type="text" id="sslInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processSSL()">ANALYZE SSL</button>
+            </div>
+            <div id="sslResult"></div>
+        </div>
+
+        <!-- Security Headers -->
+        <div id="tab-sec" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>🛡️ HTTP SECURITY HEADERS AUDIT</span></div>
+            <div class="input-group">
+                <input type="text" id="secInput" placeholder="Domain target (contoh: target.com)">
+                <button class="btn-action" onclick="processSecHeaders()">AUDIT HEADERS</button>
+            </div>
+            <div id="secResult"></div>
+        </div>
+
+        <!-- Email Recon -->
+        <div id="tab-email" class="card tab-content" style="display:none;">
+            <div class="card-title"><span>✉️ EMAIL REPUTATION & MX CHECK</span></div>
+            <div class="input-group">
+                <input type="text" id="emailInput" placeholder="Email target (contoh: target@domain.com)">
+                <button class="btn-action" onclick="processEmail()">CHECK EMAIL</button>
+            </div>
+            <div id="emailResult"></div>
+        </div>
     </div>
 
-    <!-- Modul WHOIS -->
-    <div id="tab-whois" class="card tab-content" style="display:none;">
-        <div class="card-header">📋 WHOIS DOMAIN DEEP INSPECTOR</div>
-        <div class="input-group">
-            <input type="text" id="whoisInput" placeholder="Masukkan Domain (contoh: target.com)">
-            <button class="btn-action" onclick="processWhois()">INSPECT WHOIS</button>
+    <!-- Live Terminal Activity Sidebar -->
+    <div class="terminal-box">
+        <div style="color:var(--neon-cyan); font-weight:bold; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:4px;">
+            >_ SYSTEM_LOGS
         </div>
-        <div id="whoisResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul Domain & Ports -->
-    <div id="tab-domain" class="card tab-content" style="display:none;">
-        <div class="card-header">🌐 DOMAIN & PORT SCANNER</div>
-        <div class="input-group">
-            <input type="text" id="domainInput" placeholder="Masukkan Target Domain (contoh: target.com)">
-            <button class="btn-action" onclick="processDomain()">SCAN TARGET</button>
+        <div class="terminal-logs" id="logBox">
+            <div class="log-entry"><span class="log-time">[SYS]</span> ZEEO OSINT Engine Initialized...</div>
+            <div class="log-entry"><span class="log-time">[SYS]</span> Ready for operations.</div>
         </div>
-        <div id="domainResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul Subdomains -->
-    <div id="tab-sub" class="card tab-content" style="display:none;">
-        <div class="card-header">🔍 AUTOMATED SUBDOMAIN BRUTEFORCE</div>
-        <div class="input-group">
-            <input type="text" id="subInput" placeholder="Masukkan Domain Utama (contoh: target.com)">
-            <button class="btn-action" onclick="processSubdomains()">FIND SUBDOMAINS</button>
-        </div>
-        <div id="subResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul DNS Records -->
-    <div id="tab-dns" class="card tab-content" style="display:none;">
-        <div class="card-header">📡 DNS RECORD PROPAGATION CHECK</div>
-        <div class="input-group">
-            <input type="text" id="dnsInput" placeholder="Masukkan Domain Target (contoh: target.com)">
-            <button class="btn-action" onclick="processDNS()">QUERY DNS</button>
-        </div>
-        <div id="dnsResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul SSL -->
-    <div id="tab-ssl" class="card tab-content" style="display:none;">
-        <div class="card-header">🔒 SSL/TLS CERTIFICATE FORENSICS</div>
-        <div class="input-group">
-            <input type="text" id="sslInput" placeholder="Masukkan Domain (contoh: target.com)">
-            <button class="btn-action" onclick="processSSL()">INSPECT SSL</button>
-        </div>
-        <div id="sslResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul Security Headers -->
-    <div id="tab-sec" class="card tab-content" style="display:none;">
-        <div class="card-header">🛡️ HTTP SECURITY HEADERS AUDITOR</div>
-        <div class="input-group">
-            <input type="text" id="secInput" placeholder="Masukkan Domain (contoh: target.com)">
-            <button class="btn-action" onclick="processSecHeaders()">AUDIT HEADERS</button>
-        </div>
-        <div id="secResult" style="display:none;"></div>
-    </div>
-
-    <!-- Modul Email -->
-    <div id="tab-email" class="card tab-content" style="display:none;">
-        <div class="card-header">✉️ EMAIL REPUTATION & MX LOOKUP</div>
-        <div class="input-group">
-            <input type="text" id="emailInput" placeholder="Masukkan Email (contoh: target@domain.com)">
-            <button class="btn-action" onclick="processEmail()">CHECK EMAIL</button>
-        </div>
-        <div id="emailResult" style="display:none;"></div>
     </div>
 </div>
 
 <script>
-    function switchTab(tabId) {
+    function log(msg) {
+        const box = document.getElementById('logBox');
+        const time = new Date().toLocaleTimeString();
+        box.innerHTML += `<div class="log-entry"><span class="log-time">[${time}]</span> ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+    }
+
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toUTCString().split(' ')[4] + ' UTC';
+    }, 1000);
+
+    function switchTab(tabId, e) {
         document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(`tab-${tabId}`).style.display = 'block';
-        event.target.classList.add('active');
+        if(e) e.target.classList.add('active');
+        log(`Switched module to: [${tabId.toUpperCase()}]`);
     }
 
     async function processMetadata() {
         const file = document.getElementById("fileInput").files[0]; if(!file) return;
+        log(`Analyzing metadata for file: ${file.name}`);
         const fd = new FormData(); fd.append("file", file);
         const resBox = document.getElementById("metaResult");
-        resBox.style.display = "block"; resBox.innerHTML = "<p style='color:var(--text-dim)'>Memproses data biner & payload EXIF...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Processing EXIF payload...</p>";
         
         try {
             const res = await fetch("/api/metadata", { method: "POST", body: fd });
             const data = await res.json();
-            if(data.success) {
-                let osintHtml = "";
-                if(data.osint_links) {
-                    for(const [k, v] of Object.entries(data.osint_links)) {
-                        osintHtml += `<a href="${v}" target="_blank" class="link-btn">📍 ${k}</a>`;
-                    }
-                }
-                let metaRows = "";
-                for(const [k, v] of Object.entries(data.metadata)) {
-                    metaRows += `<tr><td style="color:var(--text-dim)">${k}</td><td>${v}</td></tr>`;
-                }
-                resBox.innerHTML = `
-                    <div class="hash-card">
-                        <div><strong>FILE:</strong> ${data.filename} (${data.file_size})</div>
-                        <div><strong>MD5:</strong> <span style="color:var(--neon-cyan)">${data.hashes.md5}</span></div>
-                        <div><strong>SHA256:</strong> <span style="color:var(--neon-cyan)">${data.hashes.sha256}</span></div>
-                        ${osintHtml ? `<div style="margin-top:8px">${osintHtml}</div>` : ''}
-                    </div>
-                    <table class="data-table"><thead><tr><th>Key</th><th>Exif Value</th></tr></thead><tbody>${metaRows}</tbody></table>`;
+            let rows = "";
+            for(const [k, v] of Object.entries(data.metadata)) {
+                rows += `<tr><td style="color:var(--text-dim)">${k}</td><td>${v}</td></tr>`;
             }
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Metadata Extraction Error</span>"; }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Key</th><th>Exif Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+            log(`Metadata extraction completed for ${file.name}`);
+        } catch(e) { log(`Error parsing metadata.`); }
     }
 
     async function processUsername() {
         const u = document.getElementById("userInput").value; if(!u) return;
-        const resBox = document.getElementById("userResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Scanning platform footprints...</p>";
+        log(`Searching social footprints for username: ${u}`);
+        const resBox = document.getElementById("userResult");
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Enumerating profiles...</p>";
         
         try {
             const res = await fetch(`/api/recon/username?username=${encodeURIComponent(u)}`);
@@ -358,60 +388,56 @@
             let rows = "";
             data.results.forEach(r => {
                 const badge = r.status === 'FOUND' ? '<span class="badge badge-success">FOUND</span>' : '<span class="badge badge-danger">NOT FOUND</span>';
-                rows += `<tr><td>${r.platform}</td><td>${badge}</td><td><a href="${r.url}" target="_blank" class="link-btn">Kunjungi</a></td></tr>`;
+                rows += `<tr><td>${r.platform}</td><td>${badge}</td><td><a href="${r.url}" target="_blank" class="link-btn">Visit</a></td></tr>`;
             });
-            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Platform</th><th>Status</th><th>Direct Link</th></tr></thead><tbody>${rows}</tbody></table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Recon Error</span>"; }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Platform</th><th>Status</th><th>Link</th></tr></thead><tbody>${rows}</tbody></table>`;
+            log(`Username enumeration complete for: ${u}`);
+        } catch(e) { log(`Error executing username recon.`); }
     }
 
     async function processWhois() {
         const d = document.getElementById("whoisInput").value; if(!d) return;
-        const resBox = document.getElementById("whoisResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Querying WHOIS records...</p>";
-        
+        log(`Querying WHOIS records for: ${d}`);
+        const resBox = document.getElementById("whoisResult");
         try {
             const res = await fetch(`/api/recon/whois?domain=${encodeURIComponent(d)}`);
             const data = await res.json();
             if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
-            resBox.innerHTML = `
-                <table class="data-table">
-                    <tr><td style="color:var(--text-dim)">Domain Target</td><td><strong>${data.domain}</strong></td></tr>
-                    <tr><td style="color:var(--text-dim)">Registrar</td><td>${data.registrar}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Tanggal Dibuat</td><td>${data.creation_date}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Tanggal Kadaluarsa</td><td>${data.expiration_date}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Name Servers</td><td>${data.name_servers.join("<br>")}</td></tr>
-                </table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>WHOIS Failed</span>"; }
+            resBox.innerHTML = `<table class="data-table">
+                <tr><td>Domain</td><td>${data.domain}</td></tr>
+                <tr><td>Registrar</td><td>${data.registrar}</td></tr>
+                <tr><td>Created</td><td>${data.creation_date}</td></tr>
+                <tr><td>Expires</td><td>${data.expiration_date}</td></tr>
+            </table>`;
+            log(`WHOIS query complete for: ${d}`);
+        } catch(e) { log(`WHOIS query failed.`); }
     }
 
     async function processDomain() {
         const d = document.getElementById("domainInput").value; if(!d) return;
-        const resBox = document.getElementById("domainResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Auditing infrastructure & open ports...</p>";
-        
+        log(`Auditing ports and status for domain: ${d}`);
+        const resBox = document.getElementById("domainResult");
         try {
             const res = await fetch(`/api/scan?target=${encodeURIComponent(d)}`);
             const data = await res.json(); const info = data.data;
-            let portBadges = "";
+            let ports = "";
             for(const [p, st] of Object.entries(info.ports)) {
-                portBadges += `<span class="badge ${st==='OPEN'?'badge-success':'badge-danger'}" style="margin-right:4px">${p}: ${st}</span>`;
+                ports += `<span class="badge ${st==='OPEN'?'badge-success':'badge-danger'}" style="margin-right:4px">${p}: ${st}</span>`;
             }
-            resBox.innerHTML = `
-                <table class="data-table">
-                    <tr><td style="color:var(--text-dim)">Domain</td><td><strong>${info.target}</strong></td></tr>
-                    <tr><td style="color:var(--text-dim)">IP Address</td><td>${info.ip_address}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Status HTTP</td><td><span class="badge badge-purple">${info.status}</span></td></tr>
-                    <tr><td style="color:var(--text-dim)">Server Info</td><td>${info.web_server}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Port Audit</td><td>${portBadges}</td></tr>
-                </table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Domain Scan Error</span>"; }
+            resBox.innerHTML = `<table class="data-table">
+                <tr><td>IP Address</td><td>${info.ip_address}</td></tr>
+                <tr><td>Status</td><td>${info.status}</td></tr>
+                <tr><td>Server</td><td>${info.web_server}</td></tr>
+                <tr><td>Port Audit</td><td>${ports}</td></tr>
+            </table>`;
+            log(`Domain audit complete for: ${d}`);
+        } catch(e) { log(`Domain audit failed.`); }
     }
 
     async function processSubdomains() {
         const d = document.getElementById("subInput").value; if(!d) return;
-        const resBox = document.getElementById("subResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Bruteforcing active subdomains...</p>";
-        
+        log(`Bruteforcing subdomains for: ${d}`);
+        const resBox = document.getElementById("subResult");
         try {
             const res = await fetch(`/api/recon/subdomains?domain=${encodeURIComponent(d)}`);
             const data = await res.json();
@@ -419,52 +445,83 @@
             data.subdomains.forEach(s => {
                 rows += `<tr><td>${s.subdomain}</td><td>${s.ip}</td><td><span class="badge badge-success">ACTIVE</span></td></tr>`;
             });
-            resBox.innerHTML = `<p style="font-size:11px; margin-bottom:8px">Total Active: <strong>${data.total_found} Subdomains</strong></p>
-                <table class="data-table"><thead><tr><th>Subdomain</th><th>IP Host</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Tidak ada subdomain aktif ditemukan.</td></tr>'}</tbody></table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Subdomain Enum Error</span>"; }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Subdomain</th><th>IP</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="3">No active subdomains found.</td></tr>'}</tbody></table>`;
+            log(`Subdomain scan finished. Found: ${data.total_found}`);
+        } catch(e) { log(`Subdomain scan failed.`); }
+    }
+
+    async function processDorks() {
+        const d = document.getElementById("dorkInput").value; if(!d) return;
+        log(`Generating Google Dorks for target: ${d}`);
+        const resBox = document.getElementById("dorkResult");
+        try {
+            const res = await fetch(`/api/recon/dorks?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            let rows = "";
+            data.dorks.forEach(dk => {
+                rows += `<tr><td>${dk.name}</td><td><a href="${dk.url}" target="_blank" class="link-btn">Execute Dork ↗</a></td></tr>`;
+            });
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Dork Objective</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table>`;
+            log(`Google Dorks generated successfully.`);
+        } catch(e) { log(`Dork generator failed.`); }
+    }
+
+    async function processIPIntel() {
+        const ip = document.getElementById("ipInput").value; if(!ip) return;
+        log(`Locating IP address intelligence: ${ip}`);
+        const resBox = document.getElementById("ipResult");
+        try {
+            const res = await fetch(`/api/recon/ip-intel?ip=${encodeURIComponent(ip)}`);
+            const data = await res.json();
+            if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">IP Lookup Failed</span>`; return; }
+            const intel = data.ip_intel;
+            resBox.innerHTML = `<table class="data-table">
+                <tr><td>Target IP</td><td>${intel.query}</td></tr>
+                <tr><td>Country / City</td><td>${intel.country} (${intel.city})</td></tr>
+                <tr><td>ISP / Org</td><td>${intel.isp} / ${intel.org}</td></tr>
+                <tr><td>Coordinates</td><td>${intel.lat}, ${intel.lon}</td></tr>
+            </table>`;
+            log(`IP Intel retrieved for: ${ip}`);
+        } catch(e) { log(`IP Intel query failed.`); }
     }
 
     async function processDNS() {
         const d = document.getElementById("dnsInput").value; if(!d) return;
-        const resBox = document.getElementById("dnsResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Querying DNS records...</p>";
-        
+        log(`Querying DNS records for: ${d}`);
+        const resBox = document.getElementById("dnsResult");
         try {
             const res = await fetch(`/api/recon/dns-enum?domain=${encodeURIComponent(d)}`);
             const data = await res.json();
             let rows = "";
             for(const [type, records] of Object.entries(data.records)) {
-                rows += `<tr><td><span class="badge badge-purple">${type}</span></td><td>${records.join("<br>") || '<em>None</em>'}</td></tr>`;
+                rows += `<tr><td><span class="badge badge-purple">${type}</span></td><td>${records.join("<br>") || 'None'}</td></tr>`;
             }
-            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Record Type</th><th>Data Value</th></tr></thead><tbody>${rows}</tbody></table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>DNS Query Error</span>"; }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Type</th><th>Values</th></tr></thead><tbody>${rows}</tbody></table>`;
+            log(`DNS records retrieved.`);
+        } catch(e) { log(`DNS query failed.`); }
     }
 
     async function processSSL() {
         const d = document.getElementById("sslInput").value; if(!d) return;
-        const resBox = document.getElementById("sslResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Inspecting SSL/TLS handshake...</p>";
-        
+        log(`Inspecting SSL certs for: ${d}`);
+        const resBox = document.getElementById("sslResult");
         try {
             const res = await fetch(`/api/recon/ssl-info?domain=${encodeURIComponent(d)}`);
             const data = await res.json();
             if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
-            resBox.innerHTML = `
-                <table class="data-table">
-                    <tr><td style="color:var(--text-dim)">Common Name</td><td>${data.common_name}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Issuer Org</td><td>${data.issuer_organization}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Valid From</td><td>${data.valid_from}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Valid Until</td><td>${data.valid_to}</td></tr>
-                    <tr><td style="color:var(--text-dim)">SAN Domains</td><td>${data.san_domains.join(", ")}</td></tr>
-                </table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>SSL Inspection Error</span>"; }
+            resBox.innerHTML = `<table class="data-table">
+                <tr><td>Common Name</td><td>${data.common_name}</td></tr>
+                <tr><td>Issuer</td><td>${data.issuer_organization}</td></tr>
+                <tr><td>Valid Until</td><td>${data.valid_to}</td></tr>
+            </table>`;
+            log(`SSL inspection finished.`);
+        } catch(e) { log(`SSL inspection failed.`); }
     }
 
     async function processSecHeaders() {
         const d = document.getElementById("secInput").value; if(!d) return;
-        const resBox = document.getElementById("secResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Auditing HTTP Headers...</p>";
-        
+        log(`Auditing HTTP Security headers for: ${d}`);
+        const resBox = document.getElementById("secResult");
         try {
             const res = await fetch(`/api/recon/security-headers?domain=${encodeURIComponent(d)}`);
             const data = await res.json();
@@ -472,28 +529,27 @@
             for(const [k, v] of Object.entries(data.audit_results)) {
                 rows += `<tr><td>${k}</td><td>${v ? '<span class="badge badge-success">PRESENT</span>':'<span class="badge badge-danger">MISSING</span>'}</td></tr>`;
             }
-            resBox.innerHTML = `<p style="font-size:11px; margin-bottom:8px">Security Score: <strong style="color:var(--neon-cyan)">${data.security_score}</strong></p>
-                <table class="data-table"><thead><tr><th>Header Control</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Header Audit Error</span>"; }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Header</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`;
+            log(`Header audit finished. Score: ${data.security_score}`);
+        } catch(e) { log(`Header audit failed.`); }
     }
 
     async function processEmail() {
         const e = document.getElementById("emailInput").value; if(!e) return;
-        const resBox = document.getElementById("emailResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-dim)'>Analyzing mail domain & MX records...</p>";
-        
+        log(`Verifying email syntax and MX servers for: ${e}`);
+        const resBox = document.getElementById("emailResult");
         try {
             const res = await fetch(`/api/recon/email?email=${encodeURIComponent(e)}`);
             const data = await res.json();
             if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
-            resBox.innerHTML = `
-                <table class="data-table">
-                    <tr><td style="color:var(--text-dim)">Target Email</td><td>${data.email}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Syntax Format</td><td>${data.valid_syntax ? '<span class="badge badge-success">VALID</span>':'<span class="badge badge-danger">INVALID</span>'}</td></tr>
-                    <tr><td style="color:var(--text-dim)">Disposable Mail</td><td>${data.is_disposable ? '<span class="badge badge-danger">YES</span>':'<span class="badge badge-success">NO</span>'}</td></tr>
-                    <tr><td style="color:var(--text-dim)">MX Mail Servers</td><td>${data.mx_records.join("<br>") || "None"}</td></tr>
-                </table>`;
-        } catch(err) { resBox.innerHTML = "<span class='badge badge-danger'>Email Analysis Error</span>"; }
+            resBox.innerHTML = `<table class="data-table">
+                <tr><td>Email</td><td>${data.email}</td></tr>
+                <tr><td>Format Valid</td><td>${data.valid_syntax ? '<span class="badge badge-success">YES</span>':'<span class="badge badge-danger">NO</span>'}</td></tr>
+                <tr><td>Disposable Mail</td><td>${data.is_disposable ? '<span class="badge badge-danger">YES</span>':'<span class="badge badge-success">NO</span>'}</td></tr>
+                <tr><td>MX Servers</td><td>${data.mx_records.join("<br>") || "None"}</td></tr>
+            </table>`;
+            log(`Email verification complete.`);
+        } catch(err) { log(`Email check failed.`); }
     }
 </script>
 </body>
