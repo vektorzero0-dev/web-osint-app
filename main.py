@@ -24,7 +24,7 @@ try:
 except ImportError:
     pypdf = None
 
-app = FastAPI(title="VEKTOR ZERO - Enterprise OSINT Suite v8.0", version="8.0")
+app = FastAPI(title="ZEEO OSINT APP", version="9.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,36 +33,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-def init_db():
-    try:
-        conn = sqlite3.connect("osint_history.db")
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS scan_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                target TEXT,
-                ip_address TEXT,
-                status TEXT,
-                checked_at TEXT
-            )
-        """)
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"Database error: {e}")
-
-init_db()
-
-def check_single_port(ip: str, port: int):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.8)
-        res = s.connect_ex((ip, port))
-        s.close()
-        return port, "OPEN" if res == 0 else "CLOSED"
-    except Exception:
-        return port, "CLOSED"
 
 def convert_to_degrees(value):
     try:
@@ -99,7 +69,7 @@ def read_root():
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1 style='color:red;'>File index.html tidak ditemukan di root directory!</h1>"
+    return "<h1 style='color:red;'>File index.html tidak ditemukan!</h1>"
 
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
@@ -174,7 +144,7 @@ async def extract_metadata(file: UploadFile = File(...)):
 @app.get("/api/recon/username")
 def recon_username(username: str):
     username = username.strip().replace("@", "")
-    if not username: raise HTTPException(status_code=400, detail="Username empty")
+    if not username: raise HTTPException(status_code=400, detail="Username kosong")
     platforms = {
         "GitHub": "https://github.com/{}",
         "Telegram": "https://t.me/{}",
@@ -191,6 +161,25 @@ def recon_username(username: str):
             p, st, u = f.result()
             results.append({"platform": p, "status": st, "url": u})
     return {"success": True, "username": username, "results": results}
+
+@app.get("/api/recon/whois")
+def recon_whois(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    if not whois: return {"success": False, "message": "Library whois tidak terinstall"}
+    try:
+        w = whois.whois(domain)
+        creation_date = str(w.creation_date[0]) if isinstance(w.creation_date, list) else str(w.creation_date)
+        expiration_date = str(w.expiration_date[0]) if isinstance(w.expiration_date, list) else str(w.expiration_date)
+        return {
+            "success": True,
+            "domain": domain,
+            "registrar": str(w.registrar or "Protected"),
+            "creation_date": creation_date,
+            "expiration_date": expiration_date,
+            "name_servers": w.name_servers if w.name_servers else ["N/A"]
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 @app.get("/api/recon/ip-intel")
 def recon_ip_intel(ip: str):
@@ -241,7 +230,6 @@ def recon_dns_enum(domain: str):
             dns_data[r_type] = []
     return {"success": True, "domain": domain, "records": dns_data}
 
-# [FITUR BARU 1] SSL/TLS Certificate Forensic
 @app.get("/api/recon/ssl-info")
 def recon_ssl(domain: str):
     domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -267,7 +255,6 @@ def recon_ssl(domain: str):
     except Exception as e:
         return {"success": False, "message": f"SSL Handshake gagal: {str(e)}"}
 
-# [FITUR BARU 2] Subdomain Discovery Engine
 def check_subdomain(sub: str, target: str):
     full_domain = f"{sub}.{target}"
     try:
@@ -290,7 +277,6 @@ def recon_subdomains(domain: str):
             
     return {"success": True, "target": domain, "total_found": len(found), "subdomains": found}
 
-# [FITUR BARU 3] HTTP Security Headers Auditor
 @app.get("/api/recon/security-headers")
 def recon_sec_headers(domain: str):
     domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -317,6 +303,16 @@ def recon_sec_headers(domain: str):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
+def check_single_port(ip: str, port: int):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.8)
+        res = s.connect_ex((ip, port))
+        s.close()
+        return port, "OPEN" if res == 0 else "CLOSED"
+    except Exception:
+        return port, "CLOSED"
+
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -331,13 +327,6 @@ def scan_target(target: str):
     except Exception:
         http_status, server_info = "Offline / Blocked", "N/A"
 
-    registrar = "N/A"
-    if whois:
-        try:
-            w = whois.whois(target)
-            registrar = str(w.registrar) if w.registrar else "Private"
-        except Exception: registrar = "Protected"
-
     ports = [21, 22, 80, 443, 3306, 8080, 8443]
     port_results = {}
     if "Failed" not in ip_address:
@@ -347,7 +336,6 @@ def scan_target(target: str):
                 p, st = f.result()
                 port_results[str(p)] = st
 
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return {
         "success": True,
         "data": {
@@ -355,8 +343,7 @@ def scan_target(target: str):
             "ip_address": ip_address,
             "status": http_status,
             "web_server": server_info,
-            "registrar": registrar,
             "ports": port_results,
-            "checked_at": current_time
+            "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     }
