@@ -1,158 +1,181 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEEO OSINT APP - Cyber Intelligence Suite</title>
+    <title>ZEEO - Enterprise Intelligence Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #030712; color: #f3f4f6; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass-panel { background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(55, 65, 81, 0.5); }
-        .neon-glow { box-shadow: 0 0 25px rgba(59, 130, 246, 0.15); }
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #030712; }
-        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #090d16; color: #cbd5e1; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .soc-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(30, 41, 59, 0.8); }
+        .soc-card:hover { border-color: rgba(56, 189, 248, 0.3); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
 
-    <!-- Header / Navbar -->
-    <header class="glass-panel sticky top-0 z-50 border-b border-gray-800">
+    <!-- Top Navigation Header -->
+    <header class="soc-card sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center neon-glow">
-                    <span class="text-blue-400 font-bold mono text-lg">Z</span>
+            <div class="flex items-center space-x-4">
+                <div class="w-9 h-9 rounded-lg bg-cyan-950/80 border border-cyan-500/30 flex items-center justify-center font-mono text-cyan-400 font-bold text-base shadow-sm">
+                    Z
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg tracking-wider text-white mono">ZEEO <span class="text-blue-500">OSINT</span></h1>
-                    <p class="text-xs text-gray-400">Developed by <span class="text-blue-400 font-semibold">ZEEO</span></p>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-sm text-slate-100 tracking-wider">ZEEO</span>
+                        <span class="text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50 font-mono">INTEL SUITE</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Threat Intelligence & Digital Forensics Engine</p>
                 </div>
             </div>
-            
-            <!-- Tombol Kontak Developer di Header -->
-            <div class="flex items-center space-x-2">
-                <a href="https://wa.me/6282371729760" target="_blank" class="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
-                    <span>💬 WhatsApp</span>
+
+            <!-- Contact Developer Actions -->
+            <div class="flex items-center space-x-3 text-xs">
+                <a href="https://wa.me/6282371729760" target="_blank" class="px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 font-medium transition-all flex items-center space-x-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>WhatsApp</span>
                 </a>
-                <a href="mailto:vektorzero0@gmail.com" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
-                    <span>✉️ Email</span>
+                <a href="mailto:vektorzero0@gmail.com" class="px-3 py-1.5 rounded-md bg-cyan-950/50 hover:bg-cyan-900/50 text-cyan-300 border border-cyan-800/50 font-medium transition-all flex items-center space-x-1.5">
+                    <span>Email Support</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
-        <!-- Grid Navigasi Modul -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <!-- Modul 1: Metadata & Exif Map -->
-            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group hover:border-blue-500/50 transition-all duration-300">
-                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl group-hover:bg-blue-600/20 transition-all"></div>
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">📸</div>
-                    <div>
-                        <h2 class="font-semibold text-white">Metadata & Exif Analyzer</h2>
-                        <p class="text-xs text-gray-400">Ekstrak EXIF, GPS & Hash File</p>
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Grid Modules -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <!-- Modul 1: Phone Intelligence & Breach Checker -->
+            <div class="soc-card p-5 rounded-xl flex flex-col justify-between transition-all">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-cyan-400 uppercase tracking-wider">MODUL 01</span>
+                        <span class="p-1.5 bg-slate-900 text-cyan-400 rounded-lg border border-slate-800">📱</span>
                     </div>
+                    <h2 class="text-sm font-semibold text-slate-100 mb-1">Phone & Leak Intel</h2>
+                    <p class="text-xs text-slate-400 mb-4">Validasi nomor telepon & pemindaian kebocoran data (databreach).</p>
+                    
+                    <form id="phoneForm" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Nomor Telepon Target</label>
+                            <input type="text" id="phoneInput" placeholder="Contoh: 082371729760 / +628..." class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500/50 transition-colors" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 px-3 bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs rounded-lg transition-colors shadow-sm">Audit & Cek Kebocoran</button>
+                    </form>
                 </div>
-                <form id="metadataForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-2">Unggah File (Gambar / PDF)</label>
-                        <input type="file" id="fileInput" class="w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer bg-gray-900/50 rounded-xl border border-gray-800" required>
-                    </div>
-                    <button type="submit" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm rounded-xl transition-colors shadow-lg shadow-blue-600/20">Analisis Berkas</button>
-                </form>
             </div>
 
-            <!-- Modul 2: Target Recon -->
-            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group hover:border-purple-500/50 transition-all duration-300">
-                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl group-hover:bg-purple-600/20 transition-all"></div>
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">🌐</div>
-                    <div>
-                        <h2 class="font-semibold text-white">Target Recon Scanner</h2>
-                        <p class="text-xs text-gray-400">Port Scan, IP Intel & Tech Stack</p>
+            <!-- Modul 2: Metadata & Exif Map -->
+            <div class="soc-card p-5 rounded-xl flex flex-col justify-between transition-all">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-cyan-400 uppercase tracking-wider">MODUL 02</span>
+                        <span class="p-1.5 bg-slate-900 text-cyan-400 rounded-lg border border-slate-800">📸</span>
                     </div>
+                    <h2 class="text-sm font-semibold text-slate-100 mb-1">File Metadata Analysis</h2>
+                    <p class="text-xs text-slate-400 mb-4">Ekstraksi properti EXIF, geotag GPS, dan hash kriptografi.</p>
+
+                    <form id="metadataForm" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Berkas File (Image/PDF)</label>
+                            <input type="file" id="fileInput" class="w-full text-[11px] text-slate-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[11px] file:font-medium file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer bg-slate-950/80 rounded-lg border border-slate-800" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs rounded-lg transition-colors border border-slate-700/60">Ekstrak Metadata</button>
+                    </form>
                 </div>
-                <form id="scanForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-2">Domain / IP Target</label>
-                        <input type="text" id="targetInput" placeholder="contoh: target.com" class="w-full px-4 py-2 bg-gray-900/50 border border-gray-800 rounded-xl text-sm focus:outline-none focus:border-purple-500 text-white placeholder-gray-600" required>
-                    </div>
-                    <button type="submit" class="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm rounded-xl transition-colors shadow-lg shadow-purple-600/20">Jalankan Pemindaian</button>
-                </form>
             </div>
 
-            <!-- Modul 3: Username Intelligence -->
-            <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-all duration-300">
-                <div class="absolute -right-10 -bottom-10 w-32 h-32 bg-emerald-600/10 rounded-full blur-2xl group-hover:bg-emerald-600/20 transition-all"></div>
-                <div class="flex items-center space-x-3 mb-4">
-                    <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">👤</div>
-                    <div>
-                        <h2 class="font-semibold text-white">Username Footprinting</h2>
-                        <p class="text-xs text-gray-400">Lacak akun sosmed secara paralel</p>
+            <!-- Modul 3: Target Recon -->
+            <div class="soc-card p-5 rounded-xl flex flex-col justify-between transition-all">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-cyan-400 uppercase tracking-wider">MODUL 03</span>
+                        <span class="p-1.5 bg-slate-900 text-cyan-400 rounded-lg border border-slate-800">🌐</span>
                     </div>
+                    <h2 class="text-sm font-semibold text-slate-100 mb-1">Infrastructure Recon</h2>
+                    <p class="text-xs text-slate-400 mb-4">Pemindaian Port jaringan, DNS resolution, dan web server.</p>
+
+                    <form id="scanForm" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Domain / IP Host</label>
+                            <input type="text" id="targetInput" placeholder="Contoh: target.com" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500/50 transition-colors" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs rounded-lg transition-colors border border-slate-700/60">Pindai Infrastruktur</button>
+                    </form>
                 </div>
-                <form id="usernameForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-2">Target Username</label>
-                        <input type="text" id="usernameInput" placeholder="contoh: johndoe" class="w-full px-4 py-2 bg-gray-900/50 border border-gray-800 rounded-xl text-sm focus:outline-none focus:border-emerald-500 text-white placeholder-gray-600" required>
+            </div>
+
+            <!-- Modul 4: Username Footprinting -->
+            <div class="soc-card p-5 rounded-xl flex flex-col justify-between transition-all">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono text-cyan-400 uppercase tracking-wider">MODUL 04</span>
+                        <span class="p-1.5 bg-slate-900 text-cyan-400 rounded-lg border border-slate-800">👤</span>
                     </div>
-                    <button type="submit" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm rounded-xl transition-colors shadow-lg shadow-emerald-600/20">Cari Akun</button>
-                </form>
+                    <h2 class="text-sm font-semibold text-slate-100 mb-1">Social Footprint</h2>
+                    <p class="text-xs text-slate-400 mb-4">Lacak keberadaan entitas identitas digital lintas platform.</p>
+
+                    <form id="usernameForm" class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Handle/User</label>
+                            <input type="text" id="usernameInput" placeholder="Contoh: username" class="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 rounded-lg text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500/50 transition-colors" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs rounded-lg transition-colors border border-slate-700/60">Audit Identitas</button>
+                    </form>
+                </div>
             </div>
 
         </div>
 
-        <!-- Panel Konsol / Hasil Output -->
-        <div class="glass-panel rounded-2xl p-6 border border-gray-800 shadow-2xl">
-            <div class="flex items-center justify-between pb-4 border-b border-gray-800 mb-4">
-                <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-                    <span class="text-xs mono text-gray-400 ml-2">zeeo_terminal@output_stream:~</span>
+        <!-- Terminal Output Stream (Console) -->
+        <div class="soc-card rounded-xl border border-slate-800/80 overflow-hidden shadow-2xl">
+            <div class="bg-slate-950/90 px-4 py-3 border-b border-slate-800/80 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="flex space-x-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-slate-700"></div>
+                    </div>
+                    <span class="text-xs font-mono text-slate-400 border-l border-slate-800 pl-3">console_stream // ze_output</span>
                 </div>
-                <button onclick="clearOutput()" class="text-xs text-gray-400 hover:text-white px-3 py-1 bg-gray-800/50 rounded-lg border border-gray-700/50 transition-colors">Bersihkan Layar</button>
+                <button onclick="clearOutput()" class="text-[11px] font-mono text-slate-400 hover:text-slate-200 px-2 py-1 bg-slate-900 rounded border border-slate-800 transition-colors">Clear Console</button>
             </div>
             
-            <div id="outputContainer" class="mono text-sm text-gray-300 min-h-[250px] max-h-[450px] overflow-y-auto space-y-4">
-                <div class="text-gray-500 italic">>> Menunggu instruksi eksekusi perintah... Silakan pilih modul di atas.</div>
+            <div id="outputContainer" class="p-5 font-mono text-xs text-slate-300 min-h-[260px] max-h-[460px] overflow-y-auto space-y-3">
+                <div class="text-slate-500 italic">[SYSTEM READY] Silakan pilih dan jalankan salah satu modul analisis di atas.</div>
             </div>
         </div>
 
-        <!-- Kartu Developer / Informasi Pembuat -->
-        <div class="glass-panel rounded-2xl p-6 border border-gray-800 text-center space-y-4">
-            <div class="inline-flex items-center justify-center p-3 bg-blue-500/10 border border-blue-500/20 rounded-full mb-1">
-                <span class="text-2xl">⚡</span>
+        <!-- System Developer Info Banner -->
+        <div class="soc-card rounded-xl p-5 border border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2 mb-1">
+                    <span class="text-xs font-semibold text-slate-200">System Developer:</span>
+                    <span class="text-xs font-bold text-cyan-400 font-mono">ZEEO</span>
+                </div>
+                <p class="text-xs text-slate-400">Aplikasi dikembangkan secara resmi oleh ZEEO untuk kebutuhan analisis intelijen siber terpadu.</p>
             </div>
-            <h3 class="text-lg font-bold text-white">Dikembangkan oleh <span class="text-blue-500">ZEEO</span></h3>
-            <p class="text-xs text-gray-400 max-w-xl mx-auto">
-                Platform ZEEO OSINT ini dirancang untuk membantu analisis intelijen siber, forensik digital, serta audit keamanan informasi secara aman dan terstruktur.
-            </p>
-            <div class="flex flex-wrap justify-center gap-4 pt-2">
-                <a href="https://wa.me/6282371729760" target="_blank" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all flex items-center space-x-2">
-                    <span>💬 Hubungi Developer via WhatsApp</span>
-                </a>
-                <a href="mailto:vektorzero0@gmail.com" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-700 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2">
-                    <span>✉️ Kirim Email Kebijakan / Bug Report</span>
-                </a>
+            <div class="flex items-center space-x-3 text-xs w-full md:w-auto justify-end">
+                <a href="https://wa.me/6282371729760" target="_blank" class="px-3.5 py-2 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 hover:bg-emerald-900/40 transition-colors">Hubungi via WA (+62 823-7172-9760)</a>
+                <a href="mailto:vektorzero0@gmail.com" class="px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 transition-colors">Email Developer</a>
             </div>
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="glass-panel border-t border-gray-800 mt-auto py-6">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-500 space-y-1">
-            <p>© ZEEO Framework &bull; Developed & Maintained by <span class="text-gray-400 font-medium">ZEEO</span></p>
-            <p class="text-gray-600">Designed for Authorized Cyber Security Analysis & Digital Forensics Only.</p>
+    <footer class="border-t border-slate-800/60 bg-slate-950/60 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-0.5">
+            <p>Developed by <span class="text-slate-400 font-medium">ZEEO</span> &bull; All Rights Reserved</p>
+            <p class="text-[11px] text-slate-600">Enterprise Cyber Security Audit & Intelligence Platform</p>
         </div>
     </footer>
 
@@ -166,16 +189,84 @@
         }
 
         function clearOutput() {
-            output.innerHTML = '<div class="text-gray-500 italic">>> Konsol dibersihkan.</div>';
+            output.innerHTML = '<div class="text-slate-500 italic">[CONSOLE CLEARED] Konsol siap menerima perintah baru.</div>';
         }
 
-        // 1. Handler Metadata & Exif Form
+        // 1. Handler Phone Intelligence & Breach Checker
+        document.getElementById('phoneForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('phoneInput').value.trim();
+            printLog(`<div class="text-cyan-400 animate-pulse">[*] Memulai analisis nomor telepon & pemindaian databreach untuk ${phone}...</div>`);
+
+            try {
+                const res = await fetch(`/api/recon/phone?phone=${encodeURIComponent(phone)}`);
+                const json = await res.json();
+                
+                if (json.success) {
+                    const data = json.data;
+                    
+                    let leakBadge = data.breached 
+                        ? `<span class="px-2 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800/60 font-semibold">⚠️ TERDETEKSI BOCOR (${data.breaches_count} Database)</span>`
+                        : `<span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-semibold">✅ AMAN (Tidak Ditemukan Kebocoran)</span>`;
+
+                    let breachListHtml = '';
+                    if (data.breaches && data.breaches.length > 0) {
+                        breachListHtml = data.breaches.map(b => `
+                            <div class="p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs space-y-1">
+                                <div class="flex justify-between font-semibold text-rose-300">
+                                    <span>${b.name}</span>
+                                    <span class="text-slate-500 text-[10px]">${b.date}</span>
+                                </div>
+                                <div class="text-slate-400 text-[11px]">${b.details}</div>
+                            </div>
+                        `).join('');
+                    }
+
+                    printLog(`
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                                <span class="text-slate-200 font-bold">[+] HASIL AUDIT NOMOR: ${data.formatted_phone}</span>
+                                ${leakBadge}
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 text-xs bg-slate-950/80 p-3 rounded-lg border border-slate-800/80">
+                                <div>Negara/Kode: <span class="text-slate-200">${data.country} (${data.country_code})</span></div>
+                                <div>Prakiraan Provider: <span class="text-slate-200">${data.operator}</span></div>
+                                <div>Validasi Format: <span class="text-slate-200">${data.valid_format ? 'Valid E.164' : 'Tidak Standar'}</span></div>
+                                <div>Status Jaringan: <span class="text-slate-200">Aktif/Terdaftar</span></div>
+                            </div>
+
+                            ${data.breached ? `
+                                <div class="space-y-2">
+                                    <span class="text-xs font-semibold text-slate-300">Rincian Kebocoran Data Terkait:</span>
+                                    <div class="space-y-2">${breachListHtml}</div>
+                                </div>
+                            ` : ''}
+
+                            <div class="pt-2">
+                                <span class="text-[11px] font-semibold text-slate-400 block mb-2">Tautan Quick Investigation:</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="https://wa.me/${data.clean_phone}" target="_blank" class="px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/50 text-emerald-300 rounded text-[11px]">Buka Chat WhatsApp</a>
+                                    <a href="https://truecaller.com/search/id/${data.clean_phone}" target="_blank" class="px-3 py-1.5 bg-blue-950/60 hover:bg-blue-900/60 border border-blue-800/50 text-blue-300 rounded text-[11px]">Cek Truecaller ID</a>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                } else {
+                    printLog(`<div class="text-rose-400">[-] Gagal memproses: ${json.message}</div>`);
+                }
+            } catch (err) {
+                printLog(`<div class="text-rose-400">[-] Error Server: ${err.message}</div>`);
+            }
+        });
+
+        // 2. Handler Metadata Form
         document.getElementById('metadataForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const fileInput = document.getElementById('fileInput');
             if (!fileInput.files.length) return;
 
-            printLog(`<div class="text-blue-400 animate-pulse">[*] Mengunggah dan memproses metadata berkas...</div>`);
+            printLog(`<div class="text-cyan-400 animate-pulse">[*] Memproses file dan melakukan ekstraksi EXIF...</div>`);
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -188,99 +279,92 @@
                     let mapHtml = '';
                     if (data.maps && data.maps.has_gps) {
                         mapHtml = `
-                            <div class="p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-xl my-4">
-                                <p class="text-emerald-400 font-bold mb-3 text-sm">📍 Koordinat GPS Ditemukan: ${data.maps.latitude}, ${data.maps.longitude}</p>
-                                <div class="flex flex-wrap gap-3">
-                                    <a href="${data.maps.google_maps}" target="_blank" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🗺️ Google Maps</a>
-                                    <a href="${data.maps.google_earth}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🌍 Google Earth</a>
-                                    <a href="${data.maps.openstreetmap}" target="_blank" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-lg shadow transition-colors">🗺️ OpenStreetMap</a>
+                            <div class="p-3 bg-emerald-950/30 border border-emerald-800/40 rounded-lg my-2">
+                                <p class="text-emerald-400 font-semibold mb-2">📍 GPS Fix Found: ${data.maps.latitude}, ${data.maps.longitude}</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="${data.maps.google_maps}" target="_blank" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded text-[11px]">Google Maps</a>
+                                    <a href="${data.maps.openstreetmap}" target="_blank" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded text-[11px]">OpenStreetMap</a>
                                 </div>
                             </div>
                         `;
-                    } else {
-                        mapHtml = `<div class="p-3 bg-gray-900/50 border border-gray-800 rounded-xl text-xs text-gray-400 my-2">⚠️ Tidak ada informasi geolokasi GPS pada berkas ini.</div>`;
                     }
 
-                    let metaList = Object.entries(data.metadata).map(([k, v]) => `<div class="grid grid-cols-3 gap-2 py-1 border-b border-gray-800 text-xs"><span class="text-gray-400 font-semibold">${k}</span><span class="col-span-2 text-gray-200 break-all">${v}</span></div>`).join('');
+                    let metaList = Object.entries(data.metadata).map(([k, v]) => `<div class="grid grid-cols-3 gap-2 py-1 border-b border-slate-800/60"><span class="text-slate-400">${k}</span><span class="col-span-2 text-slate-200 break-all">${v}</span></div>`).join('');
 
                     printLog(`
                         <div class="space-y-3">
-                            <div class="text-emerald-400 font-semibold">[+] Berhasil Menganalisis: ${data.filename} (${data.file_size})</div>
+                            <div class="text-emerald-400 font-semibold">[+] Berkas Berhasil Dianalisis: ${data.filename} (${data.file_size})</div>
                             ${mapHtml}
-                            <div class="text-xs text-gray-400 font-bold mt-2">File Hashes:</div>
-                            <div class="bg-gray-900/80 p-3 rounded-xl border border-gray-800 text-xs space-y-1">
-                                <div>MD5: <span class="text-gray-300">${data.hashes.md5}</span></div>
-                                <div>SHA256: <span class="text-gray-300">${data.hashes.sha256}</span></div>
+                            <div class="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1">
+                                <div>MD5: <span class="text-slate-300">${data.hashes.md5}</span></div>
+                                <div>SHA256: <span class="text-slate-300">${data.hashes.sha256}</span></div>
                             </div>
-                            <div class="text-xs text-gray-400 font-bold mt-4">Metadata Properties:</div>
-                            <div class="max-h-60 overflow-y-auto space-y-1">${metaList}</div>
+                            <div class="max-h-48 overflow-y-auto space-y-1 pt-2">${metaList}</div>
                         </div>
                     `);
                 } else {
-                    printLog(`<div class="text-red-400">[-] Error: ${data.message || 'Gagal memproses file.'}</div>`);
+                    printLog(`<div class="text-rose-400">[-] Error: ${data.message}</div>`);
                 }
             } catch (err) {
-                printLog(`<div class="text-red-400">[-] Error Koneksi: ${err.message}</div>`);
+                printLog(`<div class="text-rose-400">[-] Error Koneksi: ${err.message}</div>`);
             }
         });
 
-        // 2. Handler Target Scan Form
+        // 3. Handler Recon Target Form
         document.getElementById('scanForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const target = document.getElementById('targetInput').value.trim();
-            printLog(`<div class="text-purple-400 animate-pulse">[*] Memindai target ${target}...</div>`);
+            printLog(`<div class="text-cyan-400 animate-pulse">[*] Memulai pemindaian target ${target}...</div>`);
 
             try {
                 const res = await fetch(`/api/scan?target=${encodeURIComponent(target)}`);
                 const json = await res.json();
                 if (json.success) {
                     const d = json.data;
-                    let portsHtml = Object.entries(d.ports).map(([p, st]) => `<span class="px-2 py-1 rounded text-xs ${st === 'OPEN' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-gray-800 text-gray-500'}">Port ${p}: ${st}</span>`).join(' ');
+                    let portsHtml = Object.entries(d.ports).map(([p, st]) => `<span class="px-2 py-0.5 rounded text-[11px] ${st === 'OPEN' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-slate-900 text-slate-500'}">Port ${p}: ${st}</span>`).join(' ');
 
                     printLog(`
                         <div class="space-y-3">
-                            <div class="text-purple-400 font-semibold">[+] Hasil Pemindaian Target: ${d.target}</div>
-                            <div class="grid grid-cols-2 gap-4 text-xs bg-gray-900/50 p-3 rounded-xl border border-gray-800">
-                                <div>IP Address: <span class="text-white font-semibold">${d.ip_address}</span></div>
-                                <div>Status Web: <span class="text-white font-semibold">${d.status}</span></div>
+                            <div class="text-cyan-400 font-semibold">[+] Recon Target: ${d.target}</div>
+                            <div class="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded border border-slate-800">
+                                <div>IP Address: <span class="text-slate-200">${d.ip_address}</span></div>
+                                <div>Web Status: <span class="text-slate-200">${d.status}</span></div>
                             </div>
-                            <div class="text-xs font-semibold text-gray-400">Port Status:</div>
                             <div class="flex flex-wrap gap-2">${portsHtml}</div>
                         </div>
                     `);
                 }
             } catch (err) {
-                printLog(`<div class="text-red-400">[-] Error: ${err.message}</div>`);
+                printLog(`<div class="text-rose-400">[-] Error: ${err.message}</div>`);
             }
         });
 
-        // 3. Handler Username Recon Form
+        // 4. Handler Username Recon Form
         document.getElementById('usernameForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const uname = document.getElementById('usernameInput').value.trim();
-            printLog(`<div class="text-emerald-400 animate-pulse">[*] Mencari jejak username "${uname}"...</div>`);
+            printLog(`<div class="text-cyan-400 animate-pulse">[*] Melacak identitas username @${uname}...</div>`);
 
             try {
                 const res = await fetch(`/api/recon/username?username=${encodeURIComponent(uname)}`);
                 const json = await res.json();
                 if (json.success) {
-                    let resultsHtml = json.results.map(r => {
-                        let color = r.status === 'FOUND' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' : 'text-gray-500 bg-gray-900/30 border-gray-800';
-                        return `<div class="flex items-center justify-between p-2 rounded-lg border text-xs ${color}">
+                    let resultsHtml = json.results.map(r => `
+                        <div class="flex items-center justify-between p-2 rounded border border-slate-800 bg-slate-950 text-xs">
                             <span>${r.platform}</span>
-                            <a href="${r.url}" target="_blank" class="underline hover:text-white">${r.status}</a>
-                        </div>`;
-                    }).join('');
+                            <a href="${r.url}" target="_blank" class="${r.status === 'FOUND' ? 'text-emerald-400 font-semibold underline' : 'text-slate-500'}">${r.status}</a>
+                        </div>
+                    `).join('');
 
                     printLog(`
                         <div class="space-y-3">
-                            <div class="text-emerald-400 font-semibold">[+] Hasil Penelusuran Username: @${json.username}</div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto">${resultsHtml}</div>
+                            <div class="text-cyan-400 font-semibold">[+] Hasil Footprint Identitas: @${json.username}</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto">${resultsHtml}</div>
                         </div>
                     `);
                 }
             } catch (err) {
-                printLog(`<div class="text-red-400">[-] Error: ${err.message}</div>`);
+                printLog(`<div class="text-rose-400">[-] Error: ${err.message}</div>`);
             }
         });
     </script>
