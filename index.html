@@ -1,130 +1,264 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEKTOR ZERO - OSINT Command Center v8.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@600;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>ZEEO OSINT APP // CYBER WAR ROOM v9.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #030712;
-            --panel: #0b1329;
-            --panel-border: rgba(0, 242, 254, 0.15);
-            --accent-cyan: #00f2fe;
-            --accent-green: #10b981;
-            --accent-red: #f43f5e;
-            --accent-purple: #a855f7;
-            --accent-yellow: #eab308;
-            --text-main: #f8fafc;
-            --text-muted: #64748b;
+            --panel: rgba(10, 16, 31, 0.85);
+            --neon-cyan: #00f3ff;
+            --neon-green: #00ff66;
+            --neon-red: #ff0055;
+            --neon-purple: #bc13fe;
+            --neon-yellow: #ffe600;
+            --border: rgba(0, 243, 255, 0.25);
+            --text-primary: #e2e8f0;
+            --text-dim: #64748b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); color: var(--text-main); padding: 20px; display: flex; justify-content: center; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Share Tech Mono', monospace; }
         
-        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 20px; }
-
-        /* Top Bar Header */
-        .top-header {
-            background: linear-gradient(135deg, rgba(11,19,41,0.9), rgba(3,7,18,0.95));
-            border: 1px solid var(--panel-border);
-            border-left: 5px solid var(--accent-cyan);
-            border-radius: 12px;
-            padding: 20px 24px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 0 30px rgba(0,242,254,0.05);
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 80%),
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
         }
-        .brand-title h1 { font-family: 'Orbitron', sans-serif; font-size: 24px; color: var(--accent-cyan); letter-spacing: 2px; }
-        .brand-title p { font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
-        .status-pill { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-green); background: rgba(16,185,129,0.1); border: 1px solid var(--accent-green); padding: 6px 14px; border-radius: 20px; }
 
-        /* Module Grid Navigation */
-        .nav-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
-        .tab-btn { background: var(--panel); border: 1px solid var(--panel-border); color: var(--text-muted); padding: 10px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'JetBrains Mono', monospace; }
-        .tab-btn:hover, .tab-btn.active { background: rgba(0,242,254,0.1); color: var(--accent-cyan); border-color: var(--accent-cyan); }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-        /* Active Card Display */
-        .card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .card-header { font-family: 'Orbitron', sans-serif; font-size: 16px; color: var(--accent-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        /* Top HUD Header */
+        .hud-header {
+            background: var(--panel);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
+            border-radius: 8px;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-        .input-group { display: flex; gap: 12px; margin-bottom: 16px; }
-        input[type="text"] { flex: 1; background: #020617; border: 1px solid #1e293b; color: #fff; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-family: 'JetBrains Mono', monospace; outline: none; }
-        input[type="text"]:focus { border-color: var(--accent-cyan); box-shadow: 0 0 10px rgba(0,242,254,0.2); }
-        input[type="file"] { background: #020617; border: 1px dashed var(--panel-border); padding: 14px; border-radius: 8px; color: var(--text-muted); width: 100%; cursor: pointer; }
+        .hud-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
 
-        .btn-action { background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'JetBrains Mono', monospace; letter-spacing: 1px; transition: all 0.2s; }
-        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            color: var(--neon-cyan);
+            letter-spacing: 3px;
+            text-shadow: 0 0 8px rgba(0,243,255,0.6);
+        }
 
-        /* Output Formatting Tables */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
-        .data-table th, .data-table td { padding: 12px; border-bottom: 1px solid #1e293b; text-align: left; }
-        .data-table th { background: rgba(255,255,255,0.02); color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-        .data-table td { font-family: 'JetBrains Mono', monospace; }
+        .brand p { font-size: 11px; color: var(--text-dim); }
 
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; font-family: 'JetBrains Mono', monospace; }
-        .badge-success { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid var(--accent-green); }
-        .badge-danger { background: rgba(244,63,94,0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .badge-purple { background: rgba(168,85,247,0.15); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+        .sys-stats { display: flex; gap: 20px; }
+        .stat-box { text-align: right; }
+        .stat-val { font-size: 14px; color: var(--neon-green); font-weight: bold; }
+        .stat-lbl { font-size: 10px; color: var(--text-dim); }
 
-        .link-btn { display: inline-block; background: rgba(0,242,254,0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 11px; font-family: 'JetBrains Mono', monospace; margin-right: 6px; }
-        .link-btn:hover { background: var(--accent-cyan); color: #000; }
-        .hash-card { background: #020617; border: 1px solid #1e293b; padding: 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; margin-bottom: 14px; }
+        /* Navigation Grid */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 10px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(0, 243, 255, 0.1);
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Workspace Module Card */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+
+        .card-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            color: var(--neon-cyan);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 16px; }
+        input[type="text"] {
+            flex: 1;
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 12px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        input[type="file"] {
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px dashed var(--border);
+            padding: 16px;
+            border-radius: 6px;
+            color: var(--text-dim);
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(0, 243, 255, 0.05));
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        /* Console Output Tables */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12px; }
+        .data-table th, .data-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); text-align: left; }
+        .data-table th { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .badge-success { background: rgba(0, 255, 102, 0.15); color: var(--neon-green); border: 1px solid var(--neon-green); }
+        .badge-danger { background: rgba(255, 0, 85, 0.15); color: var(--neon-red); border: 1px solid var(--neon-red); }
+        .badge-purple { background: rgba(188, 19, 254, 0.15); color: var(--neon-purple); border: 1px solid var(--neon-purple); }
+
+        .link-btn { display: inline-block; background: rgba(0, 243, 255, 0.1); color: var(--neon-cyan); border: 1px solid var(--neon-cyan); padding: 3px 8px; border-radius: 4px; text-decoration: none; font-size: 10px; margin-right: 4px; }
+        .link-btn:hover { background: var(--neon-cyan); color: #000; }
+        
+        .hash-card { background: rgba(2, 6, 23, 0.9); border: 1px solid var(--border); padding: 12px; border-radius: 6px; font-size: 11px; margin-bottom: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="top-header">
-        <div class="brand-title">
-            <h1>VEKTOR ZERO OSINT</h1>
-            <p>CYBER THREAT INTELLIGENCE & RECON SUITE v8.0</p>
+    <div class="hud-header">
+        <div class="brand">
+            <h1>ZEEO OSINT APP</h1>
+            <p>INTELLIGENCE & THREAT OPERATIONS SUITE v9.0 PRO</p>
         </div>
-        <div class="status-pill">● SOC ENGINE ACTIVE</div>
+        <div class="sys-stats">
+            <div class="stat-box">
+                <div class="stat-val">ACTIVE</div>
+                <div class="stat-lbl">CORE ENGINE</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" style="color:var(--neon-cyan)">9 MODULES</div>
+                <div class="stat-lbl">CAPABILITIES</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('meta')">📁 Metadata Forensics</button>
-        <button class="tab-btn" onclick="switchTab('user')">👤 Username Recon</button>
-        <button class="tab-btn" onclick="switchTab('domain')">🌐 Domain & Ports</button>
-        <button class="tab-btn" onclick="switchTab('sub')">🔍 Subdomain Finder</button>
-        <button class="tab-btn" onclick="switchTab('ssl')">🔒 SSL/TLS Audit</button>
-        <button class="tab-btn" onclick="switchTab('sec')">🛡️ Security Headers</button>
-        <button class="tab-btn" onclick="switchTab('email')">✉️ Email Intel</button>
-        <button class="tab-btn" onclick="switchTab('ip')">📍 IP Geolocation</button>
+    <div class="nav-grid">
+        <button class="nav-btn active" onclick="switchTab('meta')">📁 EXIF / METADATA</button>
+        <button class="nav-btn" onclick="switchTab('user')">👤 SOCIAL RECON</button>
+        <button class="nav-btn" onclick="switchTab('whois')">📋 WHOIS INTEL</button>
+        <button class="nav-btn" onclick="switchTab('domain')">🌐 DOMAIN / PORTS</button>
+        <button class="nav-btn" onclick="switchTab('sub')">🔍 SUBDOMAINS</button>
+        <button class="nav-btn" onclick="switchTab('dns')">📡 DNS RECORDS</button>
+        <button class="nav-btn" onclick="switchTab('ssl')">🔒 SSL FORENSICS</button>
+        <button class="nav-btn" onclick="switchTab('sec')">🛡️ SEC HEADERS</button>
+        <button class="nav-btn" onclick="switchTab('email')">✉️ EMAIL INTEL</button>
     </div>
 
-    <!-- Modul 1: Metadata -->
+    <!-- Modul EXIF Metadata -->
     <div id="tab-meta" class="card tab-content">
-        <div class="card-header">📁 FILE & EXIF METADATA EXTRACTION</div>
+        <div class="card-header">📁 FILE & EXIF FORENSICS</div>
         <input type="file" id="fileInput" onchange="processMetadata()">
-        <div id="metaResult" style="display:none; margin-top: 16px;"></div>
+        <div id="metaResult" style="display:none; margin-top: 14px;"></div>
     </div>
 
-    <!-- Modul 2: Username -->
+    <!-- Modul Username -->
     <div id="tab-user" class="card tab-content" style="display:none;">
-        <div class="card-header">👤 SOCIAL FOOTPRINT RECONNAISSANCE</div>
+        <div class="card-header">👤 SOCIAL FOOTPRINT ENUMERATOR</div>
         <div class="input-group">
-            <input type="text" id="userInput" placeholder="Masukkan Target Username (contoh: target_id)">
+            <input type="text" id="userInput" placeholder="Masukkan Username (contoh: target_username)">
             <button class="btn-action" onclick="processUsername()">EXECUTE RECON</button>
         </div>
         <div id="userResult" style="display:none;"></div>
     </div>
 
-    <!-- Modul 3: Domain -->
-    <div id="tab-domain" class="card tab-content" style="display:none;">
-        <div class="card-header">🌐 DOMAIN RECON & PORT SCANNER</div>
+    <!-- Modul WHOIS -->
+    <div id="tab-whois" class="card tab-content" style="display:none;">
+        <div class="card-header">📋 WHOIS DOMAIN DEEP INSPECTOR</div>
         <div class="input-group">
-            <input type="text" id="domainInput" placeholder="Masukkan Domain (contoh: target.com)">
+            <input type="text" id="whoisInput" placeholder="Masukkan Domain (contoh: target.com)">
+            <button class="btn-action" onclick="processWhois()">INSPECT WHOIS</button>
+        </div>
+        <div id="whoisResult" style="display:none;"></div>
+    </div>
+
+    <!-- Modul Domain & Ports -->
+    <div id="tab-domain" class="card tab-content" style="display:none;">
+        <div class="card-header">🌐 DOMAIN & PORT SCANNER</div>
+        <div class="input-group">
+            <input type="text" id="domainInput" placeholder="Masukkan Target Domain (contoh: target.com)">
             <button class="btn-action" onclick="processDomain()">SCAN TARGET</button>
         </div>
         <div id="domainResult" style="display:none;"></div>
     </div>
 
-    <!-- Modul 4: Subdomains -->
+    <!-- Modul Subdomains -->
     <div id="tab-sub" class="card tab-content" style="display:none;">
-        <div class="card-header">🔍 AUTOMATED SUBDOMAIN ENUMERATOR</div>
+        <div class="card-header">🔍 AUTOMATED SUBDOMAIN BRUTEFORCE</div>
         <div class="input-group">
             <input type="text" id="subInput" placeholder="Masukkan Domain Utama (contoh: target.com)">
             <button class="btn-action" onclick="processSubdomains()">FIND SUBDOMAINS</button>
@@ -132,7 +266,17 @@
         <div id="subResult" style="display:none;"></div>
     </div>
 
-    <!-- Modul 5: SSL -->
+    <!-- Modul DNS Records -->
+    <div id="tab-dns" class="card tab-content" style="display:none;">
+        <div class="card-header">📡 DNS RECORD PROPAGATION CHECK</div>
+        <div class="input-group">
+            <input type="text" id="dnsInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+            <button class="btn-action" onclick="processDNS()">QUERY DNS</button>
+        </div>
+        <div id="dnsResult" style="display:none;"></div>
+    </div>
+
+    <!-- Modul SSL -->
     <div id="tab-ssl" class="card tab-content" style="display:none;">
         <div class="card-header">🔒 SSL/TLS CERTIFICATE FORENSICS</div>
         <div class="input-group">
@@ -142,9 +286,9 @@
         <div id="sslResult" style="display:none;"></div>
     </div>
 
-    <!-- Modul 6: Security Headers -->
+    <!-- Modul Security Headers -->
     <div id="tab-sec" class="card tab-content" style="display:none;">
-        <div class="card-header">🛡️ HTTP SECURITY HEADERS AUDIT</div>
+        <div class="card-header">🛡️ HTTP SECURITY HEADERS AUDITOR</div>
         <div class="input-group">
             <input type="text" id="secInput" placeholder="Masukkan Domain (contoh: target.com)">
             <button class="btn-action" onclick="processSecHeaders()">AUDIT HEADERS</button>
@@ -152,7 +296,7 @@
         <div id="secResult" style="display:none;"></div>
     </div>
 
-    <!-- Modul 7: Email Intel -->
+    <!-- Modul Email -->
     <div id="tab-email" class="card tab-content" style="display:none;">
         <div class="card-header">✉️ EMAIL REPUTATION & MX LOOKUP</div>
         <div class="input-group">
@@ -161,22 +305,12 @@
         </div>
         <div id="emailResult" style="display:none;"></div>
     </div>
-
-    <!-- Modul 8: IP Intel -->
-    <div id="tab-ip" class="card tab-content" style="display:none;">
-        <div class="card-header">📍 IP GEOLOCATION INTELLIGENCE</div>
-        <div class="input-group">
-            <input type="text" id="ipInput" placeholder="Masukkan IP Address (contoh: 8.8.8.8)">
-            <button class="btn-action" onclick="processIP()">TRACE IP</button>
-        </div>
-        <div id="ipResult" style="display:none;"></div>
-    </div>
 </div>
 
 <script>
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         event.target.classList.add('active');
     }
@@ -185,7 +319,7 @@
         const file = document.getElementById("fileInput").files[0]; if(!file) return;
         const fd = new FormData(); fd.append("file", file);
         const resBox = document.getElementById("metaResult");
-        resBox.style.display = "block"; resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Processing binary & Exif payload...</p>";
+        resBox.style.display = "block"; resBox.innerHTML = "<p style='color:var(--text-dim)'>Memproses data biner & payload EXIF...</p>";
         
         try {
             const res = await fetch("/api/metadata", { method: "POST", body: fd });
@@ -194,29 +328,29 @@
                 let osintHtml = "";
                 if(data.osint_links) {
                     for(const [k, v] of Object.entries(data.osint_links)) {
-                        osintHtml += `<a href="${v}" target="_blank" class="link-btn">📌 ${k}</a>`;
+                        osintHtml += `<a href="${v}" target="_blank" class="link-btn">📍 ${k}</a>`;
                     }
                 }
                 let metaRows = "";
                 for(const [k, v] of Object.entries(data.metadata)) {
-                    metaRows += `<tr><td style="color:var(--text-muted)">${k}</td><td>${v}</td></tr>`;
+                    metaRows += `<tr><td style="color:var(--text-dim)">${k}</td><td>${v}</td></tr>`;
                 }
                 resBox.innerHTML = `
                     <div class="hash-card">
                         <div><strong>FILE:</strong> ${data.filename} (${data.file_size})</div>
-                        <div><strong>MD5:</strong> <span style="color:var(--accent-cyan)">${data.hashes.md5}</span></div>
-                        <div><strong>SHA256:</strong> <span style="color:var(--accent-cyan)">${data.hashes.sha256}</span></div>
+                        <div><strong>MD5:</strong> <span style="color:var(--neon-cyan)">${data.hashes.md5}</span></div>
+                        <div><strong>SHA256:</strong> <span style="color:var(--neon-cyan)">${data.hashes.sha256}</span></div>
                         ${osintHtml ? `<div style="margin-top:8px">${osintHtml}</div>` : ''}
                     </div>
                     <table class="data-table"><thead><tr><th>Key</th><th>Exif Value</th></tr></thead><tbody>${metaRows}</tbody></table>`;
             }
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Error Extracting File</span>"; }
+        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Metadata Extraction Error</span>"; }
     }
 
     async function processUsername() {
         const u = document.getElementById("userInput").value; if(!u) return;
         const resBox = document.getElementById("userResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Scanning target social footprint...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Scanning platform footprints...</p>";
         
         try {
             const res = await fetch(`/api/recon/username?username=${encodeURIComponent(u)}`);
@@ -230,33 +364,53 @@
         } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Recon Error</span>"; }
     }
 
+    async function processWhois() {
+        const d = document.getElementById("whoisInput").value; if(!d) return;
+        const resBox = document.getElementById("whoisResult"); resBox.style.display = "block";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Querying WHOIS records...</p>";
+        
+        try {
+            const res = await fetch(`/api/recon/whois?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
+            resBox.innerHTML = `
+                <table class="data-table">
+                    <tr><td style="color:var(--text-dim)">Domain Target</td><td><strong>${data.domain}</strong></td></tr>
+                    <tr><td style="color:var(--text-dim)">Registrar</td><td>${data.registrar}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Tanggal Dibuat</td><td>${data.creation_date}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Tanggal Kadaluarsa</td><td>${data.expiration_date}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Name Servers</td><td>${data.name_servers.join("<br>")}</td></tr>
+                </table>`;
+        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>WHOIS Failed</span>"; }
+    }
+
     async function processDomain() {
         const d = document.getElementById("domainInput").value; if(!d) return;
         const resBox = document.getElementById("domainResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Scanning domain infrastructure...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Auditing infrastructure & open ports...</p>";
         
         try {
             const res = await fetch(`/api/scan?target=${encodeURIComponent(d)}`);
             const data = await res.json(); const info = data.data;
             let portBadges = "";
             for(const [p, st] of Object.entries(info.ports)) {
-                portBadges += `<span class="badge ${st==='OPEN'?'badge-success':'badge-danger'}" style="margin-right:6px">${p}: ${st}</span>`;
+                portBadges += `<span class="badge ${st==='OPEN'?'badge-success':'badge-danger'}" style="margin-right:4px">${p}: ${st}</span>`;
             }
             resBox.innerHTML = `
                 <table class="data-table">
-                    <tr><td style="color:var(--text-muted)">Target Domain</td><td><strong>${info.target}</strong></td></tr>
-                    <tr><td style="color:var(--text-muted)">IP Address</td><td>${info.ip_address}</td></tr>
-                    <tr><td style="color:var(--text-muted)">HTTP Status</td><td><span class="badge badge-purple">${info.status}</span></td></tr>
-                    <tr><td style="color:var(--text-muted)">Server Banner</td><td>${info.web_server}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Port Audit</td><td>${portBadges}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Domain</td><td><strong>${info.target}</strong></td></tr>
+                    <tr><td style="color:var(--text-dim)">IP Address</td><td>${info.ip_address}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Status HTTP</td><td><span class="badge badge-purple">${info.status}</span></td></tr>
+                    <tr><td style="color:var(--text-dim)">Server Info</td><td>${info.web_server}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Port Audit</td><td>${portBadges}</td></tr>
                 </table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Domain Scan Failed</span>"; }
+        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Domain Scan Error</span>"; }
     }
 
     async function processSubdomains() {
         const d = document.getElementById("subInput").value; if(!d) return;
         const resBox = document.getElementById("subResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Bruteforcing active subdomains...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Bruteforcing active subdomains...</p>";
         
         try {
             const res = await fetch(`/api/recon/subdomains?domain=${encodeURIComponent(d)}`);
@@ -265,15 +419,31 @@
             data.subdomains.forEach(s => {
                 rows += `<tr><td>${s.subdomain}</td><td>${s.ip}</td><td><span class="badge badge-success">ACTIVE</span></td></tr>`;
             });
-            resBox.innerHTML = `<p style="font-size:12px; margin-bottom:8px">Total Ditemukan: <strong>${data.total_found} Subdomain</strong></p>
-                <table class="data-table"><thead><tr><th>Subdomain</th><th>IP Host</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Tidak ada subdomain publik aktif ditemukan.</td></tr>'}</tbody></table>`;
+            resBox.innerHTML = `<p style="font-size:11px; margin-bottom:8px">Total Active: <strong>${data.total_found} Subdomains</strong></p>
+                <table class="data-table"><thead><tr><th>Subdomain</th><th>IP Host</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Tidak ada subdomain aktif ditemukan.</td></tr>'}</tbody></table>`;
         } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Subdomain Enum Error</span>"; }
+    }
+
+    async function processDNS() {
+        const d = document.getElementById("dnsInput").value; if(!d) return;
+        const resBox = document.getElementById("dnsResult"); resBox.style.display = "block";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Querying DNS records...</p>";
+        
+        try {
+            const res = await fetch(`/api/recon/dns-enum?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            let rows = "";
+            for(const [type, records] of Object.entries(data.records)) {
+                rows += `<tr><td><span class="badge badge-purple">${type}</span></td><td>${records.join("<br>") || '<em>None</em>'}</td></tr>`;
+            }
+            resBox.innerHTML = `<table class="data-table"><thead><tr><th>Record Type</th><th>Data Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>DNS Query Error</span>"; }
     }
 
     async function processSSL() {
         const d = document.getElementById("sslInput").value; if(!d) return;
         const resBox = document.getElementById("sslResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Inspecting SSL/TLS handshake...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Inspecting SSL/TLS handshake...</p>";
         
         try {
             const res = await fetch(`/api/recon/ssl-info?domain=${encodeURIComponent(d)}`);
@@ -281,11 +451,11 @@
             if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
             resBox.innerHTML = `
                 <table class="data-table">
-                    <tr><td style="color:var(--text-muted)">Common Name</td><td>${data.common_name}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Issuer Org</td><td>${data.issuer_organization}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Valid From</td><td>${data.valid_from}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Valid Until</td><td>${data.valid_to}</td></tr>
-                    <tr><td style="color:var(--text-muted)">SAN Domains</td><td>${data.san_domains.join(", ")}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Common Name</td><td>${data.common_name}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Issuer Org</td><td>${data.issuer_organization}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Valid From</td><td>${data.valid_from}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Valid Until</td><td>${data.valid_to}</td></tr>
+                    <tr><td style="color:var(--text-dim)">SAN Domains</td><td>${data.san_domains.join(", ")}</td></tr>
                 </table>`;
         } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>SSL Inspection Error</span>"; }
     }
@@ -293,7 +463,7 @@
     async function processSecHeaders() {
         const d = document.getElementById("secInput").value; if(!d) return;
         const resBox = document.getElementById("secResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Auditing HTTP Headers...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Auditing HTTP Headers...</p>";
         
         try {
             const res = await fetch(`/api/recon/security-headers?domain=${encodeURIComponent(d)}`);
@@ -302,15 +472,15 @@
             for(const [k, v] of Object.entries(data.audit_results)) {
                 rows += `<tr><td>${k}</td><td>${v ? '<span class="badge badge-success">PRESENT</span>':'<span class="badge badge-danger">MISSING</span>'}</td></tr>`;
             }
-            resBox.innerHTML = `<p style="font-size:12px; margin-bottom:8px">Security Rating Score: <strong style="color:var(--accent-cyan)">${data.security_score}</strong></p>
-                <table class="data-table"><thead><tr><th>Security Control Header</th><th>Audit Result</th></tr></thead><tbody>${rows}</tbody></table>`;
+            resBox.innerHTML = `<p style="font-size:11px; margin-bottom:8px">Security Score: <strong style="color:var(--neon-cyan)">${data.security_score}</strong></p>
+                <table class="data-table"><thead><tr><th>Header Control</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>`;
         } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>Header Audit Error</span>"; }
     }
 
     async function processEmail() {
         const e = document.getElementById("emailInput").value; if(!e) return;
         const resBox = document.getElementById("emailResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Checking mail domain & MX records...</p>";
+        resBox.innerHTML = "<p style='color:var(--text-dim)'>Analyzing mail domain & MX records...</p>";
         
         try {
             const res = await fetch(`/api/recon/email?email=${encodeURIComponent(e)}`);
@@ -318,30 +488,12 @@
             if(!data.success) { resBox.innerHTML = `<span class="badge badge-danger">${data.message}</span>`; return; }
             resBox.innerHTML = `
                 <table class="data-table">
-                    <tr><td style="color:var(--text-muted)">Target Email</td><td>${data.email}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Format Syntax</td><td>${data.valid_syntax ? '<span class="badge badge-success">VALID</span>':'<span class="badge badge-danger">INVALID</span>'}</td></tr>
-                    <tr><td style="color:var(--text-muted)">Disposable Mail</td><td>${data.is_disposable ? '<span class="badge badge-danger">YES</span>':'<span class="badge badge-success">NO</span>'}</td></tr>
-                    <tr><td style="color:var(--text-muted)">MX Mail Servers</td><td>${data.mx_records.join("<br>") || "None"}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Target Email</td><td>${data.email}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Syntax Format</td><td>${data.valid_syntax ? '<span class="badge badge-success">VALID</span>':'<span class="badge badge-danger">INVALID</span>'}</td></tr>
+                    <tr><td style="color:var(--text-dim)">Disposable Mail</td><td>${data.is_disposable ? '<span class="badge badge-danger">YES</span>':'<span class="badge badge-success">NO</span>'}</td></tr>
+                    <tr><td style="color:var(--text-dim)">MX Mail Servers</td><td>${data.mx_records.join("<br>") || "None"}</td></tr>
                 </table>`;
         } catch(err) { resBox.innerHTML = "<span class='badge badge-danger'>Email Analysis Error</span>"; }
-    }
-
-    async function processIP() {
-        const ip = document.getElementById("ipInput").value; if(!ip) return;
-        const resBox = document.getElementById("ipResult"); resBox.style.display = "block";
-        resBox.innerHTML = "<p style='color:var(--text-muted); font-size:12px;'>Tracing IP Geolocation...</p>";
-        
-        try {
-            const res = await fetch(`/api/recon/ip-intel?ip=${encodeURIComponent(ip)}`);
-            const data = await res.json(); const intel = data.ip_intel;
-            resBox.innerHTML = `
-                <table class="data-table">
-                    <tr><td style="color:var(--text-muted)">Query IP</td><td><strong>${intel.query}</strong></td></tr>
-                    <tr><td style="color:var(--text-muted)">Location</td><td>${intel.city}, ${intel.regionName}, ${intel.country}</td></tr>
-                    <tr><td style="color:var(--text-muted)">ISP / ASN</td><td>${intel.isp} (${intel.as})</td></tr>
-                    <tr><td style="color:var(--text-muted)">Geo Map</td><td><a href="https://maps.google.com/?q=${intel.lat},${intel.lon}" target="_blank" class="link-btn">📍 Open Map Coordinates</a></td></tr>
-                </table>`;
-        } catch(e) { resBox.innerHTML = "<span class='badge badge-danger'>IP Lookup Failed</span>"; }
     }
 </script>
 </body>
