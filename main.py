@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
+import io
 import hashlib
 import re
 import ssl
@@ -23,8 +24,9 @@ try:
 except ImportError:
     pypdf = None
 
-app = FastAPI(title="ZEEO OSINT APP", version="10.0")
+app = FastAPI(title="ZEEO OSINT APP", version="11.0")
 
+# Restriksi CORS untuk keamanan
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,6 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Helper Functions
 def convert_to_degrees(value):
     try:
         d, m, s = float(value[0]), float(value[1]), float(value[2])
@@ -61,6 +64,34 @@ def check_username_platform(platform: str, url_template: str, username: str):
     except Exception:
         return platform, "TIMEOUT", url
 
+def check_subdomain(sub: str, target: str):
+    full_domain = f"{sub}.{target}"
+    try:
+        ip = socket.gethostbyname(full_domain)
+        return {"subdomain": full_domain, "ip": ip, "status": "ACTIVE"}
+    except Exception:
+        return None
+
+def check_single_port(ip: str, port: int):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.8)
+        res = s.connect_ex((ip, port))
+        s.close()
+        return port, "OPEN" if res == 0 else "CLOSED"
+    except Exception:
+        return port, "CLOSED"
+
+# Database Fingerprint Subdomain Takeover
+CNAME_FINGERPRINTS = {
+    "github.io": "There isn't a GitHub Pages site here",
+    "herokuapp.com": "No such app",
+    "s3.amazonaws.com": "The specified bucket does not exist",
+    "wordpress.com": "Do you want to register",
+    "ghost.io": "The thing you were looking for is no longer here"
+}
+
+# Core Routes
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -70,6 +101,7 @@ def read_root():
             return f.read()
     return "<h1 style='color:red;'>File index.html tidak ditemukan!</h1>"
 
+# 1. METADATA EXTRACTION (RAM-Based / No Disk Leak + Map Links)
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     file_bytes = await file.read()
@@ -79,67 +111,79 @@ async def extract_metadata(file: UploadFile = File(...)):
     metadata_results = {}
     lat_deg, lon_deg = None, None
 
+    file_stream = io.BytesIO(file_bytes)
+
     if ext in [".jpg", ".jpeg", ".png", ".webp", ".tiff"]:
-        temp_file = f"temp_{filename}"
-        with open(temp_file, "wb") as f: f.write(file_bytes)
         try:
-            image = Image.open(temp_file)
-            exifdata = image.getexif()
-            if exifdata:
-                for tag_id in exifdata:
-                    tag = TAGS.get(tag_id, tag_id)
-                    data = exifdata.get(tag_id)
-                    if isinstance(data, bytes): data = data.decode(errors="ignore")
-                    if tag != "GPSInfo": metadata_results[str(tag)] = str(data)
-                try:
-                    gps_info = exifdata.get_ifd(34853)
-                    if gps_info:
-                        gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info}
-                        lat, lat_ref = gps_data.get("GPSLatitude"), gps_data.get("GPSLatitudeRef")
-                        lon, lon_ref = gps_data.get("GPSLongitude"), gps_data.get("GPSLongitudeRef")
-                        if lat and lon and lat_ref and lon_ref:
-                            lat_deg = convert_to_degrees(lat)
-                            if str(lat_ref).upper() != "N": lat_deg = -lat_deg
-                            lon_deg = convert_to_degrees(lon)
-                            if str(lon_ref).upper() != "E": lon_deg = -lon_deg
-                            metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
-                            metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
-                except Exception: pass
-            metadata_results["Resolution"] = f"{image.width} x {image.height} px"
-            metadata_results["Color Mode"] = image.mode
-            image.close()
-        except Exception as e: metadata_results["Error"] = str(e)
-        if os.path.exists(temp_file): os.remove(temp_file)
+            with Image.open(file_stream) as image:
+                exifdata = image.getexif()
+                if exifdata:
+                    for tag_id in exifdata:
+                        tag = TAGS.get(tag_id, tag_id)
+                        data = exifdata.get(tag_id)
+                        if isinstance(data, bytes):
+                            data = data.decode(errors="ignore")
+                        if tag != "GPSInfo":
+                            metadata_results[str(tag)] = str(data)
+
+                    # GPS Coordinates Extraction
+                    try:
+                        gps_info = exifdata.get_ifd(34853)
+                        if gps_info:
+                            gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info}
+                            lat, lat_ref = gps_data.get("GPSLatitude"), gps_data.get("GPSLatitudeRef")
+                            lon, lon_ref = gps_data.get("GPSLongitude"), gps_data.get("GPSLongitudeRef")
+                            if lat and lon and lat_ref and lon_ref:
+                                lat_deg = convert_to_degrees(lat)
+                                if str(lat_ref).upper() != "N": lat_deg = -lat_deg
+                                lon_deg = convert_to_degrees(lon)
+                                if str(lon_ref).upper() != "E": lon_deg = -lon_deg
+                                metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
+                                metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
+                    except Exception:
+                        pass
+
+                metadata_results["Resolution"] = f"{image.width} x {image.height} px"
+                metadata_results["Color Mode"] = image.mode
+        except Exception as e:
+            metadata_results["Error"] = str(e)
 
     elif ext == ".pdf":
-        temp_pdf = f"temp_{filename}"
-        with open(temp_pdf, "wb") as f: f.write(file_bytes)
         try:
             if pypdf:
-                reader = pypdf.PdfReader(temp_pdf)
+                reader = pypdf.PdfReader(file_stream)
                 if reader.metadata:
-                    for k, v in reader.metadata.items(): metadata_results[str(k).replace("/", "")] = str(v)
+                    for k, v in reader.metadata.items():
+                        metadata_results[str(k).replace("/", "")] = str(v)
                 metadata_results["Total Pages"] = str(len(reader.pages))
-        except Exception as e: metadata_results["Error"] = str(e)
-        if os.path.exists(temp_pdf): os.remove(temp_pdf)
+        except Exception as e:
+            metadata_results["Error"] = str(e)
 
-    osint_links = {}
+    # Menyiapkan Struktur Tombol Akses Peta OSINT
+    maps_data = {}
     if lat_deg is not None and lon_deg is not None:
-        osint_links = {
-            "Google Maps": f"https://www.google.com/maps?q={lat_deg},{lon_deg}",
-            "SunCalc OSINT": f"https://www.suncalc.org/#/{lat_deg},{lon_deg},17/null/null/null/null",
-            "OpenTopoMap": f"https://opentopomap.org/#map=15/{lat_deg}/{lon_deg}"
+        maps_data = {
+            "has_gps": True,
+            "latitude": lat_deg,
+            "longitude": lon_deg,
+            "google_maps": f"https://www.google.com/maps?q={lat_deg},{lon_deg}",
+            "google_earth": f"https://earth.google.com/web/search/{lat_deg},{lon_deg}",
+            "openstreetmap": f"https://www.openstreetmap.org/?mlat={lat_deg}&mlon={lon_deg}#map=16/{lat_deg}/{lon_deg}",
+            "suncalc_osint": f"https://www.suncalc.org/#/{lat_deg},{lon_deg},17/null/null/null/null"
         }
+    else:
+        maps_data = {"has_gps": False}
 
     return {
         "success": True,
         "filename": filename,
         "file_size": f"{len(file_bytes) / 1024:.2f} KB",
         "hashes": hashes,
-        "osint_links": osint_links,
+        "maps": maps_data,
         "metadata": metadata_results
     }
 
+# 2. RECONNAISSANCE ENDPOINTS
 @app.get("/api/recon/username")
 def recon_username(username: str):
     username = username.strip().replace("@", "")
@@ -272,14 +316,6 @@ def recon_ssl(domain: str):
     except Exception as e:
         return {"success": False, "message": f"SSL Handshake gagal: {str(e)}"}
 
-def check_subdomain(sub: str, target: str):
-    full_domain = f"{sub}.{target}"
-    try:
-        ip = socket.gethostbyname(full_domain)
-        return {"subdomain": full_domain, "ip": ip, "status": "ACTIVE"}
-    except Exception:
-        return None
-
 @app.get("/api/recon/subdomains")
 def recon_subdomains(domain: str):
     domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -320,16 +356,6 @@ def recon_sec_headers(domain: str):
     except Exception as e:
         return {"success": False, "message": str(e)}
 
-def check_single_port(ip: str, port: int):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.8)
-        res = s.connect_ex((ip, port))
-        s.close()
-        return port, "OPEN" if res == 0 else "CLOSED"
-    except Exception:
-        return port, "CLOSED"
-
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
@@ -364,3 +390,101 @@ def scan_target(target: str):
             "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     }
+
+# 3. MODUL FITUR OSINT BARU
+@app.get("/api/recon/subdomain-takeover")
+def check_subdomain_takeover(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    vulnerabilities = []
+    
+    try:
+        answers = dns.resolver.resolve(domain, 'CNAME')
+        for rdata in answers:
+            cname = str(rdata.target).rstrip('.')
+            for provider, fingerprint in CNAME_FINGERPRINTS.items():
+                if provider in cname:
+                    try:
+                        res = requests.get(f"http://{domain}", timeout=3)
+                        if fingerprint.lower() in res.text.lower():
+                            vulnerabilities.append({
+                                "domain": domain,
+                                "cname": cname,
+                                "provider": provider,
+                                "status": "POTENTIALLY VULNERABLE"
+                            })
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "target": domain,
+        "vulnerable": len(vulnerabilities) > 0,
+        "details": vulnerabilities if vulnerabilities else "Tidak ditemukan potensi CNAME Takeover"
+    }
+
+@app.get("/api/recon/reverse-ip")
+def recon_reverse_ip(ip_or_domain: str):
+    target = ip_or_domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    try:
+        res = requests.get(f"https://api.hackertarget.com/reverseiplookup/?q={target}", timeout=5)
+        if "API count exceed" in res.text:
+            return {"success": False, "message": "Batas API kuota harian tercapai"}
+        
+        domains = [d for d in res.text.split("\n") if d]
+        return {
+            "success": True,
+            "target": target,
+            "total_domains": len(domains),
+            "domains": domains
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/recon/tech-stack")
+def recon_tech_stack(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    detected_tech = []
+    
+    try:
+        res = requests.get(f"https://{domain}", timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+        headers = res.headers
+        body = res.text.lower()
+
+        if "X-Powered-By" in headers: detected_tech.append(f"Backend: {headers['X-Powered-By']}")
+        if "Server" in headers: detected_tech.append(f"Web Server: {headers['Server']}")
+        
+        if "wp-content" in body or "wp-includes" in body: detected_tech.append("CMS: WordPress")
+        if "elementor" in body: detected_tech.append("Plugin: Elementor Page Builder")
+        if "laravel" in body or "X-SRF-TOKEN" in headers: detected_tech.append("Framework: Laravel")
+        if "react" in body or "_next" in body: detected_tech.append("Frontend: React / Next.js")
+        if "bootstrap" in body: detected_tech.append("CSS Framework: Bootstrap")
+        if "cloudflare" in headers.get("Server", "").lower(): detected_tech.append("CDN/WAF: Cloudflare")
+
+        return {
+            "success": True,
+            "target": domain,
+            "detected_technologies": detected_tech if detected_tech else ["Teknologi spesifik tidak terdeteksi dari header/HTML dasar"]
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+@app.get("/api/recon/breach-check")
+def check_email_breach(email: str):
+    email = email.strip()
+    try:
+        res = requests.get(f"https://leak-lookup.com/api/search", data={"key": "public", "type": "email_address", "query": email}, timeout=5)
+        data = res.json()
+        return {
+            "success": True,
+            "email": email,
+            "breached": data.get("error") == "false",
+            "sources": data.get("message", [])
+        }
+    except Exception:
+        return {
+            "success": True,
+            "email": email,
+            "info": f"Gunakan dork manual untuk memeriksa breach email: https://www.google.com/search?q=\"{email}\"+filetype:txt+OR+ext:log"
+        }
