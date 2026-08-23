@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VEKTOR ZERO - Enterprise OSINT Suite</title>
+    <title>VEKTOR ZERO - Enterprise OSINT Suite v6.0</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -29,7 +29,7 @@
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 650px;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -82,7 +82,7 @@
         }
 
         .card-header h2 {
-            font-size: 16px;
+            font-size: 15px;
             margin: 0;
             color: var(--text-main);
             letter-spacing: 1px;
@@ -91,28 +91,28 @@
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         label {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        input[type="text"], input[type="file"] {
+        input[type="text"], input[type="file"], select {
             background: #0f172a;
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             font-size: 13px;
             outline: none;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus, select:focus {
             border-color: var(--cyan-accent);
         }
 
@@ -120,13 +120,14 @@
             background: var(--primary-blue);
             color: white;
             border: none;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             font-weight: bold;
             letter-spacing: 1px;
             cursor: pointer;
             transition: background 0.2s;
             width: 100%;
+            font-size: 12px;
         }
 
         .btn:hover {
@@ -185,7 +186,7 @@
     <div class="header">
         <div class="title-box">
             <h1>VEKTOR ZERO</h1>
-            <span>v5.1 SECURE OSINT SUITE</span>
+            <span>v6.0 ENTERPRISE OSINT SUITE</span>
         </div>
         <div class="status-badge">● SYSTEM ONLINE</div>
     </div>
@@ -193,54 +194,107 @@
     <!-- Modul 1: Metadata & File Analysis -->
     <div class="card">
         <div class="card-header">
-            <span style="font-size: 20px;">📁</span>
+            <span style="font-size: 18px;">📁</span>
             <h2>METADATA & DOCUMENT EXTRACTOR</h2>
         </div>
         <div class="input-group">
-            <label>Pilih Berkas Target (Gambar, PDF, DOCX)</label>
+            <label>Upload Berkas (Gambar / PDF / DOCX)</label>
             <input type="file" id="fileInput" onchange="uploadFileForMetadata()">
         </div>
 
         <div id="fileResultContainer" style="display: none;">
-            <!-- Hash Integrity -->
             <div class="hash-box">
                 <strong style="color: var(--amber-accent);">EVIDENCE HASH (CHAIN OF CUSTODY):</strong><br>
                 <span>MD5: </span><span id="hashMd5" style="color: #a7f3d0;">-</span><br>
                 <span>SHA256: </span><span id="hashSha256" style="color: #a7f3d0;">-</span>
             </div>
 
-            <!-- GPS OSINT Links -->
             <div id="osintLinksContainer" style="display: none; margin-bottom: 10px;">
                 <label style="color: var(--green-accent);">NAVIGASI OSINT GEOLOKASI:</label>
                 <div id="osintLinksList" class="links-flex"></div>
             </div>
 
-            <!-- Metadata Output -->
             <label>RAW METADATA OUTPUT:</label>
             <div id="metadataOutput" class="result-box">Memproses berkas...</div>
         </div>
     </div>
 
-    <!-- Modul 2: Domain & IP Recon -->
+    <!-- Modul 2: Social Media Username Recon -->
     <div class="card">
         <div class="card-header">
-            <span style="font-size: 20px;">🔍</span>
-            <h2>DOMAIN & IP RECON</h2>
+            <span style="font-size: 18px;">👤</span>
+            <h2>USERNAME RECON</h2>
         </div>
         <div class="input-group">
-            <label>Masukkan Target Domain / IP</label>
+            <label>Masukkan Username Target</label>
+            <input type="text" id="usernameInput" placeholder="contoh: target_user">
+        </div>
+        <button class="btn" onclick="executeUsernameRecon()">PERIKSA USERNAME</button>
+
+        <div id="usernameResultContainer" style="display: none;">
+            <div id="usernameOutput" class="result-box" style="margin-top: 10px;">Mencari di berbagai platform...</div>
+        </div>
+    </div>
+
+    <!-- Modul 3: Domain & Network Scan -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size: 18px;">🌐</span>
+            <h2>DOMAIN & NETWORK RECON</h2>
+        </div>
+        <div class="input-group">
+            <label>Target Domain / Hostname</label>
             <input type="text" id="targetInput" placeholder="contoh: target-domain.com">
         </div>
         <button class="btn" onclick="executeScan()">LACAK TARGET DOMAIN</button>
 
         <div id="scanResultContainer" style="display: none;">
-            <div id="scanOutput" class="result-box" style="margin-top: 15px;">Memindai target...</div>
+            <div id="scanOutput" class="result-box" style="margin-top: 10px;">Memindai target...</div>
+        </div>
+    </div>
+
+    <!-- Modul 4: IP Intelligence & Geolocation -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size: 18px;">📍</span>
+            <h2>IP INTELLIGENCE & GEOLOCATION</h2>
+        </div>
+        <div class="input-group">
+            <label>Masukkan IP Address</label>
+            <input type="text" id="ipInput" placeholder="contoh: 8.8.8.8">
+        </div>
+        <button class="btn" onclick="executeIpIntel()">LACAK IP ADDRESS</button>
+
+        <div id="ipResultContainer" style="display: none;">
+            <div id="ipOutput" class="result-box" style="margin-top: 10px;">Melacak informasi IP...</div>
+        </div>
+    </div>
+
+    <!-- Modul 5: User-Agent & Header Generator -->
+    <div class="card">
+        <div class="card-header">
+            <span style="font-size: 18px;">🛡️</span>
+            <h2>USER-AGENT GENERATOR</h2>
+        </div>
+        <div class="input-group">
+            <label>Pilih Preset Browser / Crawler</label>
+            <select id="presetSelect">
+                <option value="desktop_chrome">Desktop Chrome</option>
+                <option value="mobile_android">Mobile Android</option>
+                <option value="mobile_ios">Mobile iOS Safari</option>
+                <option value="googlebot">Googlebot Crawler</option>
+            </select>
+        </div>
+        <button class="btn" onclick="generateHeader()">GENERATE HEADER HTTP</button>
+
+        <div id="headerResultContainer" style="display: none;">
+            <div id="headerOutput" class="result-box" style="margin-top: 10px;">-</div>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. Fungsi Unggah & Analisis Metadata Berkas (Fitur 3 & 4)
+    // 1. Metadata & Document Extractor
     async function uploadFileForMetadata() {
         const fileInput = document.getElementById("fileInput");
         const file = fileInput.files[0];
@@ -261,19 +315,13 @@
         osintLinksContainer.style.display = "none";
 
         try {
-            const response = await fetch("/api/metadata", {
-                method: "POST",
-                body: formData
-            });
-
+            const response = await fetch("/api/metadata", { method: "POST", body: formData });
             const data = await response.json();
 
             if (data.success) {
-                // Tampilkan Hash
                 hashMd5.textContent = data.hashes.md5;
                 hashSha256.textContent = data.hashes.sha256;
 
-                // Tampilkan Link OSINT jika ada data GPS
                 osintLinksList.innerHTML = "";
                 if (data.osint_links && Object.keys(data.osint_links).length > 0) {
                     osintLinksContainer.style.display = "block";
@@ -286,44 +334,105 @@
                         osintLinksList.appendChild(btn);
                     }
                 }
-
-                // Tampilkan Metadata JSON
                 metadataOutput.textContent = JSON.stringify(data.metadata, null, 2);
             } else {
-                metadataOutput.textContent = "[Error] Gagal meng-ekstrak metadata berkas.";
+                metadataOutput.textContent = "[Error] Gagal mengekstrak metadata.";
             }
         } catch (error) {
-            console.error(error);
-            metadataOutput.textContent = "[Error] Terjadi kesalahan koneksi ke server backend.";
+            metadataOutput.textContent = "[Error] Kesalahan koneksi ke server.";
         }
     }
 
-    // 2. Fungsi Pemindaian Domain & IP
-    async function executeScan() {
-        const targetInput = document.getElementById("targetInput").value.trim();
-        const scanResultContainer = document.getElementById("scanResultContainer");
-        const scanOutput = document.getElementById("scanOutput");
+    // 2. Username Recon
+    async function executeUsernameRecon() {
+        const username = document.getElementById("usernameInput").value.trim();
+        const container = document.getElementById("usernameResultContainer");
+        const output = document.getElementById("usernameOutput");
 
-        if (!targetInput) {
-            alert("Harap masukkan target domain atau IP!");
-            return;
-        }
+        if (!username) return alert("Harap masukkan username!");
 
-        scanResultContainer.style.display = "block";
-        scanOutput.textContent = `[+] Memulai investigasi pada target: ${targetInput}...\nMohon tunggu...`;
+        container.style.display = "block";
+        output.textContent = `[+] Memeriksa ketersediaan username: ${username}...`;
 
         try {
-            const response = await fetch(`/api/scan?target=${encodeURIComponent(targetInput)}`);
-            const result = await response.json();
-
-            if (result.success) {
-                scanOutput.textContent = JSON.stringify(result.data, null, 2);
+            const res = await fetch(`/api/recon/username?username=${encodeURIComponent(username)}`);
+            const data = await res.json();
+            if (data.success) {
+                output.textContent = JSON.stringify(data.results, null, 2);
             } else {
-                scanOutput.textContent = `[Error] Gagal memindai target.`;
+                output.textContent = "[Error] Gagal melacak username.";
             }
         } catch (error) {
-            console.error(error);
-            scanOutput.textContent = `[Error] Terjadi kesalahan koneksi ke server backend.`;
+            output.textContent = "[Error] Kesalahan koneksi ke server.";
+        }
+    }
+
+    // 3. Domain & Network Scan
+    async function executeScan() {
+        const target = document.getElementById("targetInput").value.trim();
+        const container = document.getElementById("scanResultContainer");
+        const output = document.getElementById("scanOutput");
+
+        if (!target) return alert("Harap masukkan target domain!");
+
+        container.style.display = "block";
+        output.textContent = `[+] Memulai investigasi pada target: ${target}...`;
+
+        try {
+            const res = await fetch(`/api/scan?target=${encodeURIComponent(target)}`);
+            const result = await res.json();
+            if (result.success) {
+                output.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                output.textContent = "[Error] Gagal memindai target.";
+            }
+        } catch (error) {
+            output.textContent = "[Error] Kesalahan koneksi ke server.";
+        }
+    }
+
+    // 4. IP Intelligence
+    async function executeIpIntel() {
+        const ip = document.getElementById("ipInput").value.trim();
+        const container = document.getElementById("ipResultContainer");
+        const output = document.getElementById("ipOutput");
+
+        if (!ip) return alert("Harap masukkan IP address!");
+
+        container.style.display = "block";
+        output.textContent = `[+] Melacak intelijen IP: ${ip}...`;
+
+        try {
+            const res = await fetch(`/api/recon/ip-intel?ip=${encodeURIComponent(ip)}`);
+            const data = await res.json();
+            if (data.success) {
+                output.textContent = JSON.stringify(data.ip_intel, null, 2);
+            } else {
+                output.textContent = "[Error] Gagal mendapatkan data IP.";
+            }
+        } catch (error) {
+            output.textContent = "[Error] Kesalahan koneksi ke server.";
+        }
+    }
+
+    // 5. User-Agent Generator
+    async function generateHeader() {
+        const preset = document.getElementById("presetSelect").value;
+        const container = document.getElementById("headerResultContainer");
+        const output = document.getElementById("headerOutput");
+
+        container.style.display = "block";
+
+        try {
+            const res = await fetch(`/api/util/header-generator?preset=${preset}`);
+            const data = await res.json();
+            if (data.success) {
+                output.textContent = JSON.stringify(data, null, 2);
+            } else {
+                output.textContent = "[Error] Gagal membuat header.";
+            }
+        } catch (error) {
+            output.textContent = "[Error] Kesalahan koneksi ke server.";
         }
     }
 </script>
