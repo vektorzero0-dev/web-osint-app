@@ -3,23 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZEEO // WAR ROOM OSINT CONSOLE v2.0</title>
-    <!-- Fonts & Icons -->
+    <title>ZEEO // WAR ROOM OSINT CONSOLE</title>
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Orbitron:wght@600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet GIS Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Chart.js -->
+    <!-- Chart.js for Cyber Metrics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
         :root {
-            --bg-dark: #020617;
-            --bg-panel: rgba(15, 23, 42, 0.85);
-            --bg-panel-border: rgba(56, 189, 248, 0.25);
+            --bg-dark: #030712;
+            --bg-panel: rgba(15, 23, 42, 0.75);
+            --bg-panel-border: rgba(56, 189, 248, 0.18);
             --neon-cyan: #38bdf8;
-            --neon-cyan-glow: rgba(56, 189, 248, 0.5);
+            --neon-cyan-glow: rgba(56, 189, 248, 0.4);
             --neon-green: #4ade80;
             --neon-amber: #fbbf24;
             --neon-red: #f43f5e;
@@ -38,41 +33,28 @@
             min-height: 100vh;
             padding: 20px;
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, transparent 75%),
+                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 70%),
                 linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
             background-size: 100% 100%, 24px 24px, 24px 24px;
         }
 
-        /* Scanline Overlay Effect */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            z-index: 999;
-            pointer-events: none;
-            opacity: 0.6;
-        }
-
         .layout-grid {
-            max-width: 1700px;
+            max-width: 1600px;
             margin: 0 auto;
             display: grid;
             grid-template-columns: 280px 1fr 360px;
             gap: 20px;
         }
 
-        @media (max-width: 1300px) { .layout-grid { grid-template-columns: 240px 1fr; } .side-metrics { grid-column: span 2; } }
+        @media (max-width: 1280px) { .layout-grid { grid-template-columns: 240px 1fr; } .side-metrics { grid-column: span 2; } }
         @media (max-width: 900px) { .layout-grid { grid-template-columns: 1fr; } .side-metrics { grid-column: span 1; } }
 
-        /* Header Console */
+        /* HUD Header */
         .header-bar {
             grid-column: 1 / -1;
             background: var(--bg-panel);
-            backdrop-filter: blur(25px);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--bg-panel-border);
             border-left: 6px solid var(--neon-cyan);
             border-radius: 12px;
@@ -80,13 +62,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .brand-title {
             font-family: 'Orbitron', sans-serif;
             font-weight: 900;
-            font-size: 22px;
+            font-size: 24px;
             letter-spacing: 2px;
             color: #fff;
             display: flex;
@@ -96,7 +78,11 @@
 
         .brand-title span { color: var(--neon-cyan); text-shadow: 0 0 15px var(--neon-cyan-glow); }
 
-        .system-status { display: flex; align-items: center; gap: 16px; }
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
         .status-badge {
             background: rgba(74, 222, 128, 0.1);
@@ -121,7 +107,7 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* Navigation Sidebar */
+        /* Left Sidebar Nav */
         .sidebar-nav {
             background: var(--bg-panel);
             backdrop-filter: blur(20px);
@@ -170,21 +156,21 @@
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
         }
 
-        /* Workspace Panel */
+        /* Center Panel Workspace */
         .workspace-panel {
             background: var(--bg-panel);
             backdrop-filter: blur(20px);
             border: 1px solid var(--bg-panel-border);
             border-radius: 12px;
             padding: 24px;
-            min-height: 650px;
+            min-height: 600px;
             display: flex;
             flex-direction: column;
         }
 
         .panel-header {
             font-family: 'Orbitron', sans-serif;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 800;
             color: #fff;
             margin-bottom: 20px;
@@ -195,64 +181,23 @@
             justify-content: space-between;
         }
 
-        /* Map UI & OSINT Tools */
-        #map { height: 320px; width: 100%; border-radius: 10px; border: 1px solid var(--bg-panel-border); }
-
-        .osint-map-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        .map-btn {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: var(--text-primary);
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 600;
+        .input-wrapper {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            text-decoration: none;
-            transition: all 0.2s;
+            gap: 12px;
+            margin-bottom: 24px;
         }
 
-        .map-btn:hover {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan-glow);
-            transform: translateY(-2px);
-        }
-
-        .map-btn-wa {
-            background: rgba(16, 185, 129, 0.2);
-            border-color: rgba(16, 185, 129, 0.5);
-            color: #34d399;
-        }
-        
-        .map-btn-wa:hover {
-            background: #10b981;
-            color: #000;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-        }
-
-        /* Input Controls */
-        .input-wrapper { display: flex; gap: 12px; margin-bottom: 20px; }
-
-        input[type="text"], input[type="file"] {
+        input[type="text"] {
             flex: 1;
             background: rgba(2, 6, 23, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
-            padding: 12px 16px;
+            padding: 14px 18px;
             border-radius: 8px;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 12px;
+            font-size: 13px;
             outline: none;
+            transition: all 0.2s;
         }
 
         input[type="text"]:focus {
@@ -264,10 +209,10 @@
             background: linear-gradient(135deg, var(--neon-cyan), #0284c7);
             color: #000;
             border: none;
-            padding: 0 24px;
+            padding: 0 28px;
             border-radius: 8px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 800;
             letter-spacing: 1px;
             cursor: pointer;
@@ -279,33 +224,88 @@
             transform: translateY(-2px);
         }
 
-        /* Styled Tables */
-        .styled-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+        /* Results Display */
+        .results-container {
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .styled-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+        }
+
         .styled-table th {
             background: rgba(255, 255, 255, 0.03);
             color: var(--text-secondary);
-            font-size: 10px;
+            font-size: 11px;
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 1px;
-            padding: 12px;
+            padding: 14px;
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
+
         .styled-table td {
-            padding: 10px 12px;
+            padding: 14px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 12px;
+            font-size: 13px;
+            color: var(--text-primary);
         }
+
         .styled-table td code {
             font-family: 'JetBrains Mono', monospace;
             color: var(--neon-cyan);
             background: rgba(56, 189, 248, 0.08);
-            padding: 2px 6px;
+            padding: 3px 8px;
             border-radius: 4px;
         }
 
-        /* Terminal & Side Panel */
-        .side-metrics { display: flex; flex-direction: column; gap: 20px; }
+        /* Severity Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-low { background: rgba(74, 222, 128, 0.15); color: var(--neon-green); border: 1px solid rgba(74, 222, 128, 0.3); }
+        .badge-med { background: rgba(251, 191, 36, 0.15); color: var(--neon-amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+        .badge-high { background: rgba(244, 63, 94, 0.15); color: var(--neon-red); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .badge-purple { background: rgba(192, 132, 252, 0.15); color: var(--neon-purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+
+        .btn-action-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 5px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-action-link:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 12px var(--neon-cyan-glow);
+        }
+
+        /* Right Side Analytics */
+        .side-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         .metric-card {
             background: var(--bg-panel);
             backdrop-filter: blur(20px);
@@ -313,6 +313,7 @@
             border-radius: 12px;
             padding: 18px;
         }
+
         .metric-title {
             font-family: 'Orbitron', sans-serif;
             font-size: 11px;
@@ -320,17 +321,19 @@
             margin-bottom: 12px;
             letter-spacing: 1px;
         }
+
         .terminal-box {
             background: rgba(2, 6, 23, 0.95);
             border: 1px solid var(--bg-panel-border);
             border-radius: 10px;
-            padding: 12px;
+            padding: 14px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            height: 200px;
+            height: 220px;
             overflow-y: auto;
             color: var(--text-secondary);
         }
+
         .log-time { color: var(--text-dim); margin-right: 6px; }
         .log-accent { color: var(--neon-green); }
 
@@ -347,16 +350,20 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .report-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
+
+        .report-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+        }
     </style>
 </head>
 <body>
 
 <div class="layout-grid">
-    <!-- Header Console -->
+    <!-- HUD Header -->
     <header class="header-bar">
         <div class="brand-title">
-            ZEEO <span>WAR ROOM OSINT v2.0</span>
+            ZEEO <span>WAR ROOM OSINT</span>
         </div>
         <div class="system-status">
             <div class="status-badge"><div class="pulse-dot"></div> ENGINE ONLINE</div>
@@ -364,81 +371,146 @@
         </div>
     </header>
 
-    <!-- Navigation Sidebar -->
+    <!-- Navigation Bar -->
     <nav class="sidebar-nav">
         <div class="nav-label">RECON MODULES</div>
-        <button class="nav-item active" onclick="switchModule('meta', event)"><i class="fa-solid fa-camera"></i> Metadata & Spatial Intel</button>
-        <button class="nav-item" onclick="switchModule('user', event)"><i class="fa-solid fa-user-secret"></i> Social Footprint</button>
-        <button class="nav-item" onclick="switchModule('whois', event)"><i class="fa-solid fa-id-card"></i> WHOIS Inspector</button>
-        <button class="nav-item" onclick="switchModule('domain', event)"><i class="fa-solid fa-network-wired"></i> Domain & Port Scan</button>
-        <button class="nav-item" onclick="switchModule('sub', event)"><i class="fa-solid fa-sitemap"></i> Subdomain Enumerator</button>
-        <button class="nav-item" onclick="switchModule('dorks', event)"><i class="fa-solid fa-bullseye"></i> Google Dorks Engine</button>
+        <button class="nav-item active" onclick="switchModule('meta', event)">📁 Metadata Extraction</button>
+        <button class="nav-item" onclick="switchModule('user', event)">👤 Social Footprint</button>
+        <button class="nav-item" onclick="switchModule('whois', event)">📋 WHOIS Inspector</button>
+        <button class="nav-item" onclick="switchModule('domain', event)">🌐 Domain & Port Scan</button>
+        <button class="nav-item" onclick="switchModule('sub', event)">🔍 Subdomain Enumerator</button>
+        <button class="nav-item" onclick="switchModule('dorks', event)">🎯 Google Dorks Engine</button>
 
         <div class="nav-label">THREAT INTEL</div>
-        <button class="nav-item" onclick="switchModule('ipintel', event)"><i class="fa-solid fa-earth-americas"></i> IP Geolocation Intel</button>
-        <button class="nav-item" onclick="switchModule('dns', event)"><i class="fa-solid fa-satellite"></i> DNS Record Lookup</button>
-        <button class="nav-item" onclick="switchModule('ssl', event)"><i class="fa-solid fa-shield-halved"></i> SSL Certificate Audit</button>
-        <button class="nav-item" onclick="switchModule('sec', event)"><i class="fa-solid fa-lock"></i> Security Headers Audit</button>
-        <button class="nav-item" onclick="switchModule('email', event)"><i class="fa-solid fa-envelope"></i> Email Reputation Check</button>
-        <button class="nav-item" onclick="switchModule('phone', event)"><i class="fa-solid fa-mobile-screen"></i> Phone Leak Investigator</button>
+        <button class="nav-item" onclick="switchModule('ipintel', event)">🌍 IP Geolocation Intel</button>
+        <button class="nav-item" onclick="switchModule('dns', event)">📡 DNS Record Lookup</button>
+        <button class="nav-item" onclick="switchModule('ssl', event)">🔒 SSL Certificate Audit</button>
+        <button class="nav-item" onclick="switchModule('sec', event)">🛡️ Security Headers Audit</button>
+        <button class="nav-item" onclick="switchModule('email', event)">✉️ Email Reputation Check</button>
+        <button class="nav-item" onclick="switchModule('phone', event)">📱 Phone Leak Investigator</button>
     </nav>
 
     <!-- Main Workspace -->
     <main class="workspace-panel">
-        <!-- 1. Metadata & Spatial Intelligence Module -->
+        <!-- 1. Metadata -->
         <div id="mod-meta" class="module-content">
-            <div class="panel-header">
-                <span><i class="fa-solid fa-crosshairs text-cyan-400"></i> EXIF FORENSICS & SPATIAL INTEL</span>
-                <span id="gpsBadge" class="text-xs px-2 py-1 rounded bg-slate-800 text-slate-400 border border-slate-700">NO GPS DETECTED</span>
-            </div>
-            
+            <div class="panel-header">📁 EXIF FORENSICS & METADATA EXTRACTION</div>
             <div class="input-wrapper">
-                <input type="file" id="fileInput" accept="image/*">
-                <button class="btn-execute" onclick="executeMetadata()">ANALYZE METADATA</button>
+                <input type="file" id="fileInput" style="padding:10px;">
+                <button class="btn-execute" onclick="executeMetadata()">EXTRACT METADATA</button>
             </div>
-
-            <!-- Spatial OSINT Mapping Container -->
-            <div id="spatialContainer" style="display:none;" class="mb-6">
-                <div id="map"></div>
-                <!-- Interactive OSINT Direct Action Buttons -->
-                <div class="osint-map-grid">
-                    <a id="btnGoogle" target="_blank" class="map-btn"><i class="fa-brands fa-google text-red-400"></i> Google Maps</a>
-                    <a id="btnStreetView" target="_blank" class="map-btn"><i class="fa-solid fa-street-view text-yellow-400"></i> Street View</a>
-                    <a id="btnOSM" target="_blank" class="map-btn"><i class="fa-solid fa-globe text-blue-400"></i> OpenStreetMap</a>
-                    <a id="btnYandex" target="_blank" class="map-btn"><i class="fa-solid fa-map-location text-red-500"></i> Yandex Maps</a>
-                    <a id="btnWikimapia" target="_blank" class="map-btn"><i class="fa-solid fa-layer-group text-purple-400"></i> Wikimapia</a>
-                    <a id="btnSunCalc" target="_blank" class="map-btn"><i class="fa-solid fa-sun text-amber-400"></i> SunCalc (Bayangan)</a>
-                    <a id="btnWASherlok" target="_blank" class="map-btn map-btn-wa"><i class="fa-brands fa-whatsapp"></i> Kirim Sherlok WA</a>
-                </div>
-            </div>
-
             <div id="res-meta" class="results-container"></div>
         </div>
 
-        <!-- Placeholder untuk Modul Lainnya (WHOIS, Domain, dll) -->
+        <!-- 2. Username -->
         <div id="mod-user" class="module-content" style="display:none;">
             <div class="panel-header">👤 USERNAME RECONNAISSANCE</div>
             <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="Target Username (e.g., target_user)">
-                <button class="btn-execute">RUN ENUMERATION</button>
+                <input type="text" id="userInput" placeholder="Masukkan Target Username (contoh: target_user)">
+                <button class="btn-execute" onclick="executeUsername()">RUN ENUMERATION</button>
             </div>
+            <div id="res-user" class="results-container"></div>
         </div>
+
+        <!-- 3. WHOIS -->
         <div id="mod-whois" class="module-content" style="display:none;">
             <div class="panel-header">📋 WHOIS DOMAIN INSPECTOR</div>
             <div class="input-wrapper">
-                <input type="text" id="whoisInput" placeholder="Target Domain (e.g., target.com)">
-                <button class="btn-execute">INSPECT DOMAIN</button>
+                <input type="text" id="whoisInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeWhois()">INSPECT DOMAIN</button>
             </div>
+            <div id="res-whois" class="results-container"></div>
         </div>
-        <div id="mod-domain" class="module-content" style="display:none;"><div class="panel-header">🌐 DOMAIN & PORT AUDITOR</div></div>
-        <div id="mod-sub" class="module-content" style="display:none;"><div class="panel-header">🔍 SUBDOMAIN ENUMERATOR</div></div>
-        <div id="mod-dorks" class="module-content" style="display:none;"><div class="panel-header">🎯 GOOGLE DORKS ENGINE</div></div>
-        <div id="mod-ipintel" class="module-content" style="display:none;"><div class="panel-header">🌍 IP GEOLOCATION INTEL</div></div>
-        <div id="mod-dns" class="module-content" style="display:none;"><div class="panel-header">📡 DNS RECORD LOOKUP</div></div>
-        <div id="mod-ssl" class="module-content" style="display:none;"><div class="panel-header">🔒 SSL CERTIFICATE AUDIT</div></div>
-        <div id="mod-sec" class="module-content" style="display:none;"><div class="panel-header">🛡️ SECURITY HEADERS AUDIT</div></div>
-        <div id="mod-email" class="module-content" style="display:none;"><div class="panel-header">✉️ EMAIL REPUTATION CHECK</div></div>
-        <div id="mod-phone" class="module-content" style="display:none;"><div class="panel-header">📱 PHONE LEAK INVESTIGATOR</div></div>
+
+        <!-- 4. Domain & Ports -->
+        <div id="mod-domain" class="module-content" style="display:none;">
+            <div class="panel-header">🌐 DOMAIN & PORT AUDITOR</div>
+            <div class="input-wrapper">
+                <input type="text" id="domainInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeDomain()">SCAN PORTS</button>
+            </div>
+            <div id="res-domain" class="results-container"></div>
+        </div>
+
+        <!-- 5. Subdomains -->
+        <div id="mod-sub" class="module-content" style="display:none;">
+            <div class="panel-header">🔍 SUBDOMAIN ENUMERATOR</div>
+            <div class="input-wrapper">
+                <input type="text" id="subInput" placeholder="Masukkan Domain Utama (contoh: target.com)">
+                <button class="btn-execute" onclick="executeSubdomains()">ENUMERATE</button>
+            </div>
+            <div id="res-sub" class="results-container"></div>
+        </div>
+
+        <!-- 6. Google Dorks -->
+        <div id="mod-dorks" class="module-content" style="display:none;">
+            <div class="panel-header">🎯 GOOGLE DORKS GENERATOR</div>
+            <div class="input-wrapper">
+                <input type="text" id="dorkInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeDorks()">GENERATE DORKS</button>
+            </div>
+            <div id="res-dorks" class="results-container"></div>
+        </div>
+
+        <!-- 7. IP Intel -->
+        <div id="mod-ipintel" class="module-content" style="display:none;">
+            <div class="panel-header">🌍 IP GEOLOCATION INTEL</div>
+            <div class="input-wrapper">
+                <input type="text" id="ipInput" placeholder="Masukkan IP Target (contoh: 8.8.8.8)">
+                <button class="btn-execute" onclick="executeIPIntel()">LOCATE IP</button>
+            </div>
+            <div id="res-ipintel" class="results-container"></div>
+        </div>
+
+        <!-- 8. DNS Lookup -->
+        <div id="mod-dns" class="module-content" style="display:none;">
+            <div class="panel-header">📡 DNS RECORD ENUMERATION</div>
+            <div class="input-wrapper">
+                <input type="text" id="dnsInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeDNS()">QUERY DNS</button>
+            </div>
+            <div id="res-dns" class="results-container"></div>
+        </div>
+
+        <!-- 9. SSL Audit -->
+        <div id="mod-ssl" class="module-content" style="display:none;">
+            <div class="panel-header">🔒 SSL/TLS CERTIFICATE AUDIT</div>
+            <div class="input-wrapper">
+                <input type="text" id="sslInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeSSL()">ANALYZE SSL</button>
+            </div>
+            <div id="res-ssl" class="results-container"></div>
+        </div>
+
+        <!-- 10. Security Headers -->
+        <div id="mod-sec" class="module-content" style="display:none;">
+            <div class="panel-header">🛡️ SECURITY HEADERS AUDIT</div>
+            <div class="input-wrapper">
+                <input type="text" id="secInput" placeholder="Masukkan Domain Target (contoh: target.com)">
+                <button class="btn-execute" onclick="executeSecHeaders()">AUDIT HEADERS</button>
+            </div>
+            <div id="res-sec" class="results-container"></div>
+        </div>
+
+        <!-- 11. Email Check -->
+        <div id="mod-email" class="module-content" style="display:none;">
+            <div class="panel-header">✉️ EMAIL REPUTATION AUDITOR</div>
+            <div class="input-wrapper">
+                <input type="text" id="emailInput" placeholder="Masukkan Target Email (contoh: admin@target.com)">
+                <button class="btn-execute" onclick="executeEmail()">VERIFY EMAIL</button>
+            </div>
+            <div id="res-email" class="results-container"></div>
+        </div>
+
+        <!-- 12. Phone Leak -->
+        <div id="mod-phone" class="module-content" style="display:none;">
+            <div class="panel-header">📱 PHONE NUMBER LEAK & BREACH SEARCH</div>
+            <div class="input-wrapper">
+                <input type="text" id="phoneInput" placeholder="Masukkan Nomor Telepon (contoh: 08123456789 atau +628123456789)">
+                <button class="btn-execute" onclick="executePhone()">SEARCH BREACHES</button>
+            </div>
+            <div id="res-phone" class="results-container"></div>
+        </div>
     </main>
 
     <!-- Side Metrics & Logs -->
@@ -446,8 +518,8 @@
         <div class="metric-card">
             <div class="metric-title">SYSTEM AUDIT LOGS</div>
             <div class="terminal-box" id="logBox">
-                <div><span class="log-time">[SYS]</span> Console Initialized.</div>
-                <div><span class="log-time">[SYS]</span> All Recon Modules Active.</div>
+                <div><span class="log-time">[SYS]</span> Initializing War Room OSINT Console...</div>
+                <div><span class="log-time">[SYS]</span> All recon modules loaded successfully.</div>
             </div>
         </div>
 
@@ -464,8 +536,6 @@
 
 <script>
     let activeDataReport = {};
-    let map = null;
-    let marker = null;
 
     function writeLog(msg) {
         const box = document.getElementById('logBox');
@@ -488,7 +558,7 @@
 
     // Chart.js Metrics Initialization
     const ctx = document.getElementById('threatChart').getContext('2d');
-    new Chart(ctx, {
+    const threatChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['Low', 'Medium', 'High', 'Critical'],
@@ -504,98 +574,251 @@
     });
 
     async function executeMetadata() {
-        const fileInput = document.getElementById('fileInput');
-        if(!fileInput.files[0]) return alert('Pilih file gambar terlebih dahulu!');
-        
-        const file = fileInput.files[0];
+        const file = document.getElementById('fileInput').files[0]; if(!file) return;
         writeLog(`Processing EXIF metadata for: ${file.name}`);
-        const fd = new FormData();
-        fd.append('file', file);
-
+        const fd = new FormData(); fd.append('file', file);
         const container = document.getElementById('res-meta');
-        container.innerHTML = "<p style='color:var(--text-secondary);'>Parsing image headers & GPS tags...</p>";
+        container.innerHTML = "<p style='color:var(--text-secondary);'>Parsing image headers...</p>";
 
         try {
             const res = await fetch('/api/metadata', { method: 'POST', body: fd });
             const data = await res.json();
             activeDataReport['metadata'] = data;
-
-            // Render Table Metadata
             let rows = "";
             for(const [k, v] of Object.entries(data.metadata)) {
-                rows += `<tr><td style="color:var(--text-secondary); font-weight:600;">${k}</td><td><code>${v}</code></td></tr>`;
+                rows += `<tr><td style="color:var(--text-secondary)">${k}</td><td><code>${v}</code></td></tr>`;
             }
-            container.innerHTML = `<table class="styled-table"><thead><tr><th>EXIF Attribute</th><th>Decoded Value</th></tr></thead><tbody>${rows}</tbody></table>`;
-
-            // Handling GPS Data & Multi-Platform Mapping
-            const gpsBadge = document.getElementById('gpsBadge');
-            const spatialContainer = document.getElementById('spatialContainer');
-
-            if(data.has_gps && data.gps) {
-                const lat = data.gps.latitude;
-                const lon = data.gps.longitude;
-
-                gpsBadge.className = "text-xs px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
-                gpsBadge.innerText = `GPS LOCKED: ${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-
-                spatialContainer.style.display = 'block';
-
-                // Assign Links to Multi OSINT Map Platforms
-                document.getElementById('btnGoogle').href = `https://www.google.com/maps?q=${lat},${lon}`;
-                document.getElementById('btnStreetView').href = `https://www.google.com/maps?layer=c&cbll=${lat},${lon}`;
-                document.getElementById('btnOSM').href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
-                document.getElementById('btnYandex').href = `https://yandex.com/maps/?pt=${lon},${lat}&z=16&l=map`;
-                document.getElementById('btnWikimapia').href = `http://wikimapia.org/#lang=en&lat=${lat}&lon=${lon}&z=16`;
-                document.getElementById('btnSunCalc').href = `https://www.suncalc.org/#/${lat},${lon},16/null/null/1/0`;
-
-                // WhatsApp Direct Link Integration
-                const waText = encodeURIComponent(`📍 *ZEEO WAR ROOM - LOKASI TARGET*\n\nLatitude: ${lat}\nLongitude: ${lon}\n\n*Google Maps Link:*\nhttps://www.google.com/maps?q=${lat},${lon}`);
-                document.getElementById('btnWASherlok').href = `https://api.whatsapp.com/send?text=${waText}`;
-
-                initMap(lat, lon);
-                writeLog(`GPS Coordinates found: Lat ${lat}, Lon ${lon}`);
-            } else {
-                gpsBadge.className = "text-xs px-2 py-1 rounded bg-rose-500/20 text-rose-400 border border-rose-500/40";
-                gpsBadge.innerText = "NO GPS DATA";
-                spatialContainer.style.display = 'none';
-                writeLog(`No GPS metadata extracted.`);
-            }
-
-        } catch(e) {
-            writeLog(`Error processing metadata.`);
-            container.innerHTML = "<p style='color:var(--neon-red);'>Error extracting metadata from file.</p>";
-        }
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>EXIF Tag</th><th>Decoded Value</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`Metadata extracted for ${file.name}`);
+        } catch(e) { writeLog(`Error extracting metadata.`); }
     }
 
-    function initMap(lat, lon) {
-        if (!map) {
-            map = L.map('map').setView([lat, lon], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(map);
-        } else {
-            map.setView([lat, lon], 15);
-        }
+    async function executeUsername() {
+        const u = document.getElementById('userInput').value; if(!u) return;
+        writeLog(`Performing footprint enumeration for username: ${u}`);
+        const container = document.getElementById('res-user');
+        container.innerHTML = "<p style='color:var(--text-secondary);'>Searching online platforms...</p>";
 
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lon]).addTo(map)
-            .bindPopup(`<b>Target Location</b><br>Lat: ${lat}<br>Lon: ${lon}`)
-            .openPopup();
+        try {
+            const res = await fetch(`/api/recon/username?username=${encodeURIComponent(u)}`);
+            const data = await res.json();
+            activeDataReport['username'] = data;
+            let rows = "";
+            data.results.forEach(p => {
+                rows += `<tr><td><strong>${p.platform}</strong></td><td><span class="badge badge-purple">${p.category}</span></td><td><a href="${p.url}" target="_blank" class="btn-action-link">Open Profile ↗</a></td></tr>`;
+            });
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>Platform</th><th>Category</th><th>Direct Link</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`Footprint scan complete for: ${u}`);
+        } catch(e) { writeLog(`Error running username search.`); }
+    }
+
+    async function executeWhois() {
+        const d = document.getElementById('whoisInput').value; if(!d) return;
+        writeLog(`Querying WHOIS records for: ${d}`);
+        const container = document.getElementById('res-whois');
+        try {
+            const res = await fetch(`/api/recon/whois?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['whois'] = data;
+            container.innerHTML = `<table class="styled-table">
+                <tr><td style="color:var(--text-secondary)">Domain Name</td><td><code>${data.domain}</code></td></tr>
+                <tr><td style="color:var(--text-secondary)">Registrar</td><td>${data.registrar}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Creation Date</td><td>${data.creation_date}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Expiration Date</td><td>${data.expiration_date}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Name Servers</td><td><code>${data.name_servers.join(', ')}</code></td></tr>
+            </table>`;
+            writeLog(`WHOIS query complete.`);
+        } catch(e) { writeLog(`WHOIS query failed.`); }
+    }
+
+    async function executeDomain() {
+        const d = document.getElementById('domainInput').value; if(!d) return;
+        writeLog(`Auditing domain infrastructure & ports for: ${d}`);
+        const container = document.getElementById('res-domain');
+        try {
+            const res = await fetch(`/api/scan?target=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['port_scan'] = data;
+            let portRows = "";
+            data.ports.forEach(p => {
+                const badgeClass = p.status === 'OPEN' ? 'badge-high' : 'badge-low';
+                portRows += `<tr><td><code>Port ${p.port}</code></td><td>${p.service}</td><td><span class="badge ${badgeClass}">${p.status}</span></td></tr>`;
+            });
+            container.innerHTML = `
+                <table class="styled-table" style="margin-bottom:16px;">
+                    <tr><td style="color:var(--text-secondary)">IP Address</td><td><code>${data.ip_address}</code></td></tr>
+                    <tr><td style="color:var(--text-secondary)">HTTP Response</td><td><code>${data.http_status}</code></td></tr>
+                    <tr><td style="color:var(--text-secondary)">Web Server</td><td>${data.web_server}</td></tr>
+                </table>
+                <table class="styled-table"><thead><tr><th>Port</th><th>Service</th><th>State</th></tr></thead><tbody>${portRows}</tbody></table>
+            `;
+            writeLog(`Port audit complete for: ${d}`);
+        } catch(e) { writeLog(`Domain audit failed.`); }
+    }
+
+    async function executeSubdomains() {
+        const d = document.getElementById('subInput').value; if(!d) return;
+        writeLog(`Scanning subdomains for domain: ${d}`);
+        const container = document.getElementById('res-sub');
+        try {
+            const res = await fetch(`/api/recon/subdomains?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['subdomains'] = data;
+            let rows = "";
+            data.subdomains.forEach(s => {
+                rows += `<tr><td><code>${s.subdomain}</code></td><td><code>${s.ip}</code></td><td><span class="badge badge-low">${s.status}</span></td></tr>`;
+            });
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>Subdomain</th><th>Resolved IP</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`Subdomain enumeration complete.`);
+        } catch(e) { writeLog(`Subdomain enumeration failed.`); }
+    }
+
+    async function executeDorks() {
+        const d = document.getElementById('dorkInput').value; if(!d) return;
+        writeLog(`Generating dork vectors for target: ${d}`);
+        const container = document.getElementById('res-dorks');
+        try {
+            const res = await fetch(`/api/recon/dorks?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['google_dorks'] = data;
+            let rows = "";
+            data.dorks.forEach(dk => {
+                const riskBadge = dk.risk === 'CRITICAL' || dk.risk === 'HIGH' ? 'badge-high' : 'badge-med';
+                rows += `<tr><td><strong>${dk.category}</strong></td><td><span class="badge ${riskBadge}">${dk.risk}</span></td><td><a href="${dk.url}" target="_blank" class="btn-action-link">Launch Dork Query ↗</a></td></tr>`;
+            });
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>Dork Vector</th><th>Risk Profile</th><th>Query Link</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`Google Dorks generated successfully.`);
+        } catch(e) { writeLog(`Dork generation failed.`); }
+    }
+
+    async function executeIPIntel() {
+        const ip = document.getElementById('ipInput').value; if(!ip) return;
+        writeLog(`Executing IP Geolocation intel for: ${ip}`);
+        const container = document.getElementById('res-ipintel');
+        try {
+            const res = await fetch(`/api/recon/ip-intel?ip=${encodeURIComponent(ip)}`);
+            const data = await res.json();
+            activeDataReport['ip_intel'] = data;
+            container.innerHTML = `<table class="styled-table">
+                <tr><td style="color:var(--text-secondary)">IP Address</td><td><code>${data.ip}</code></td></tr>
+                <tr><td style="color:var(--text-secondary)">Country / City</td><td>${data.country} - ${data.city} (${data.region})</td></tr>
+                <tr><td style="color:var(--text-secondary)">ISP / Network ASN</td><td>${data.isp} (${data.asn})</td></tr>
+                <tr><td style="color:var(--text-secondary)">Coordinates</td><td><code>${data.latitude}, ${data.longitude}</code></td></tr>
+                <tr><td style="color:var(--text-secondary)">Timezone</td><td>${data.timezone}</td></tr>
+            </table>`;
+            writeLog(`IP intel retrieved for: ${ip}`);
+        } catch(e) { writeLog(`IP intel failed.`); }
+    }
+
+    async function executeDNS() {
+        const d = document.getElementById('dnsInput').value; if(!d) return;
+        writeLog(`Querying DNS records for: ${d}`);
+        const container = document.getElementById('res-dns');
+        try {
+            const res = await fetch(`/api/recon/dns-enum?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['dns'] = data;
+            let rows = "";
+            data.records.forEach(r => {
+                rows += `<tr><td><span class="badge badge-purple">${r.type}</span></td><td><code>${r.value}</code></td><td><code>${r.ttl}s</code></td></tr>`;
+            });
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>Record Type</th><th>Value</th><th>TTL</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`DNS records fetched.`);
+        } catch(e) { writeLog(`DNS lookup failed.`); }
+    }
+
+    async function executeSSL() {
+        const d = document.getElementById('sslInput').value; if(!d) return;
+        writeLog(`Auditing SSL/TLS certificates for: ${d}`);
+        const container = document.getElementById('res-ssl');
+        try {
+            const res = await fetch(`/api/recon/ssl-info?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['ssl'] = data;
+            container.innerHTML = `<table class="styled-table">
+                <tr><td style="color:var(--text-secondary)">Common Name</td><td><code>${data.common_name}</code></td></tr>
+                <tr><td style="color:var(--text-secondary)">Issuer</td><td>${data.issuer}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Validity Period</td><td>${data.valid_from} to ${data.valid_to}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Encryption Standard</td><td>${data.signature_algorithm} (${data.key_length})</td></tr>
+                <tr><td style="color:var(--text-secondary)">Overall Rating</td><td><span class="badge badge-low">${data.ssl_grade}</span></td></tr>
+            </table>`;
+            writeLog(`SSL audit complete.`);
+        } catch(e) { writeLog(`SSL audit failed.`); }
+    }
+
+    async function executeSecHeaders() {
+        const d = document.getElementById('secInput').value; if(!d) return;
+        writeLog(`Performing Security Headers audit for: ${d}`);
+        const container = document.getElementById('res-sec');
+        try {
+            const res = await fetch(`/api/recon/security-headers?domain=${encodeURIComponent(d)}`);
+            const data = await res.json();
+            activeDataReport['security_headers'] = data;
+            let rows = "";
+            data.headers.forEach(h => {
+                const badge = h.status === 'PASS' ? 'badge-low' : (h.status === 'WARNING' ? 'badge-med' : 'badge-high');
+                rows += `<tr><td><strong>${h.header}</strong></td><td><span class="badge ${badge}">${h.status}</span></td><td>${h.description}</td></tr>`;
+            });
+            container.innerHTML = `<table class="styled-table"><thead><tr><th>Security Header</th><th>Status</th><th>Security Context</th></tr></thead><tbody>${rows}</tbody></table>`;
+            writeLog(`Security headers audit complete.`);
+        } catch(e) { writeLog(`Header audit failed.`); }
+    }
+
+    async function executeEmail() {
+        const email = document.getElementById('emailInput').value; if(!email) return;
+        writeLog(`Verifying reputation & delivery status for: ${email}`);
+        const container = document.getElementById('res-email');
+        try {
+            const res = await fetch(`/api/recon/email?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+            activeDataReport['email'] = data;
+            container.innerHTML = `<table class="styled-table">
+                <tr><td style="color:var(--text-secondary)">Email Address</td><td><code>${data.email}</code></td></tr>
+                <tr><td style="color:var(--text-secondary)">Syntax Verification</td><td>${data.valid_syntax ? '<span class="badge badge-low">VALID</span>' : '<span class="badge badge-high">INVALID</span>'}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Disposable Address</td><td>${data.is_disposable ? '<span class="badge badge-high">YES</span>' : '<span class="badge badge-low">NO (CLEAN)</span>'}</td></tr>
+                <tr><td style="color:var(--text-secondary)">MX Records Exists</td><td>${data.mx_records_found ? '<span class="badge badge-low">FOUND</span>' : '<span class="badge badge-high">NOT FOUND</span>'}</td></tr>
+                <tr><td style="color:var(--text-secondary)">Deliverability Score</td><td><code>${data.deliverability_score}</code></td></tr>
+            </table>`;
+            writeLog(`Email verification complete.`);
+        } catch(e) { writeLog(`Email check failed.`); }
+    }
+
+    async function executePhone() {
+        const phone = document.getElementById('phoneInput').value; if(!phone) return;
+        writeLog(`Searching breach history for phone number: ${phone}`);
+        const container = document.getElementById('res-phone');
+        container.innerHTML = "<p style='color:var(--text-secondary);'>Scanning threat intelligence feeds...</p>";
+
+        try {
+            const res = await fetch(`/api/recon/phone?phone=${encodeURIComponent(phone)}`);
+            const data = await res.json();
+            activeDataReport['phone_recon'] = data;
+            
+            let linkBtns = "";
+            data.search_engines.forEach(s => {
+                linkBtns += `<a href="${s.url}" target="_blank" class="btn-action-link" style="margin-right:8px; margin-bottom:8px;">🔎 ${s.name} ↗</a>`;
+            });
+
+            container.innerHTML = `
+                <table class="styled-table">
+                    <tr><td style="color:var(--text-secondary)">Input Number</td><td><strong>${data.raw_input}</strong></td></tr>
+                    <tr><td style="color:var(--text-secondary)">International Format</td><td><code>${data.formatted_phone}</code></td></tr>
+                    <tr><td style="color:var(--text-secondary)">Detected Country</td><td><span class="badge badge-purple">${data.country}</span></td></tr>
+                    <tr><td style="color:var(--text-secondary)">Deep Leak Search Vectors</td><td>${linkBtns}</td></tr>
+                </table>
+            `;
+            writeLog(`Phone leak investigation finished for: ${phone}`);
+        } catch(e) { writeLog(`Phone scan failed.`); }
     }
 
     function downloadJSONReport() {
-        if (Object.keys(activeDataReport).length === 0) {
-            alert('Belum ada data modul yang dieksekusi untuk diekspor!');
-            return;
-        }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(activeDataReport, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `OSINT_Executive_Report_${Date.now()}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        writeLog(`Executive report exported as JSON.`);
+        const blob = new Blob([JSON.stringify(activeDataReport, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `OSINT_REPORT_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        writeLog(`Exported executive report to JSON.`);
     }
 </script>
 </body>
