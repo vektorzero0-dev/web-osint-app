@@ -6,7 +6,6 @@ import socket
 import dns.resolver
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
-import sqlite3
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
@@ -24,7 +23,7 @@ try:
 except ImportError:
     pypdf = None
 
-app = FastAPI(title="ZEEO OSINT APP", version="9.0")
+app = FastAPI(title="ZEEO OSINT APP", version="10.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -152,10 +151,12 @@ def recon_username(username: str):
         "Pinterest": "https://www.pinterest.com/{}",
         "TikTok": "https://www.tiktok.com/@{}",
         "Twitter / X": "https://x.com/{}",
-        "Instagram": "https://instagram.com/{}"
+        "Instagram": "https://instagram.com/{}",
+        "Medium": "https://medium.com/@{}",
+        "Dev.to": "https://dev.to/{}"
     }
     results = []
-    with ThreadPoolExecutor(max_workers=7) as executor:
+    with ThreadPoolExecutor(max_workers=9) as executor:
         futures = [executor.submit(check_username_platform, p, url, username) for p, url in platforms.items()]
         for f in futures:
             p, st, u = f.result()
@@ -184,11 +185,27 @@ def recon_whois(domain: str):
 @app.get("/api/recon/ip-intel")
 def recon_ip_intel(ip: str):
     try:
-        res = requests.get(f"http://ip-api.com/json/{ip.strip()}?fields=status,message,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,query", timeout=4)
+        ip = ip.strip()
+        res = requests.get(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,query", timeout=4)
         data = res.json()
         return {"success": data.get("status") == "success", "ip_intel": data}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@app.get("/api/recon/dorks")
+def generate_dorks(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    dorks = [
+        {"name": "Exposed Directory Listing", "query": f"site:{domain} intitle:index.of"},
+        {"name": "Configuration Files", "query": f"site:{domain} ext:xml OR ext:conf OR ext:cnf OR ext:reg OR ext:inf OR ext:rdp OR ext:cfg OR ext:txt OR ext:ora OR ext:ini"},
+        {"name": "Database & Backup Files", "query": f"site:{domain} ext:sql OR ext:dbf OR ext:mdb OR ext:bkp OR ext:bak OR ext:old"},
+        {"name": "Publicly Exposed Documents", "query": f"site:{domain} ext:pdf OR ext:doc OR ext:docx OR ext:xls OR ext:xlsx OR ext:ppt"},
+        {"name": "Login & Admin Interfaces", "query": f"site:{domain} inurl:login OR inurl:admin OR inurl:portal OR inurl:user"},
+        {"name": "PHP Info & Server Logs", "query": f"site:{domain} ext:log OR inurl:phpinfo.php OR ext:php intitle:phpinfo"}
+    ]
+    for d in dorks:
+        d["url"] = f"https://www.google.com/search?q={requests.utils.quote(d['query'])}"
+    return {"success": True, "target": domain, "dorks": dorks}
 
 @app.get("/api/recon/email")
 def recon_email(email: str):
