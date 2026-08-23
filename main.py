@@ -1,8 +1,10 @@
 import os
 import re
+import io
 import socket
 import hashlib
 import requests
+from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, File, UploadFile, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -12,7 +14,7 @@ from PIL.ExifTags import TAGS, GPSTAGS
 
 app = FastAPI(title="ZEEO Cyber Intel Suite API", version="3.0")
 
-# Izinkan CORS agar frontend bisa dipanggil dari domain/port mana saja
+# Izinkan CORS agar frontend bisa dipanggil dari mana saja
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,6 +22,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Menentukan lokasi direktori utama aplikasi (Anti 500 Error di Render)
+BASE_DIR = Path(__file__).resolve().parent
 
 # ==========================================
 # HELPER FUNCTIONS
@@ -42,80 +47,86 @@ def get_decimal_from_dms(dms, ref):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    """Melayani file index.html jika berada di direktori yang sama"""
-    if os.path.exists("index.html"):
-        with open("index.html", "r", encoding="utf-8") as f:
+    """Melayani file index.html menggunakan path absolut"""
+    index_path = BASE_DIR / "index.html"
+    if index_path.exists():
+        with open(index_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>ZEEO API Server Active</h1><p>index.html tidak ditemukan di direktori utama.</p>")
+    return HTMLResponse(
+        status_code=404,
+        content="<h1>ZEEO API Server Active</h1><p>File index.html tidak ditemukan di direktori utama server.</p>"
+    )
 
 
 @app.get("/api/recon/phone")
 async def recon_phone(phone: str = Query(..., description="Nomor telepon target")):
     """Audit provider & pengecekan kebocoran data terenkripsi"""
-    clean_num = re.sub(r"\D", "", phone)
-    
-    if not clean_num:
-        return JSONResponse(status_code=400, content={"success": False, "message": "Nomor telepon tidak valid"})
+    try:
+        clean_num = re.sub(r"\D", "", phone)
+        
+        if not clean_num:
+            return JSONResponse(status_code=400, content={"success": False, "message": "Nomor telepon tidak valid"})
 
-    # Format nomor ke format internasional Indonesia
-    if clean_num.startswith("0"):
-        formatted = "+62" + clean_num[1:]
-    elif clean_num.startswith("62"):
-        formatted = "+" + clean_num
-    else:
-        formatted = "+" + clean_num
+        # Format nomor ke format internasional Indonesia
+        if clean_num.startswith("0"):
+            formatted = "+62" + clean_num[1:]
+        elif clean_num.startswith("62"):
+            formatted = "+" + clean_num
+        else:
+            formatted = "+" + clean_num
 
-    # Deteksi Sederhana Operator Indonesia
-    operator = "Unknown Provider"
-    prefix = clean_num[:4] if clean_num.startswith("08") else ("0" + clean_num[2:5] if clean_num.startswith("628") else "")
+        # Deteksi Provider Indonesia
+        operator = "Unknown Provider"
+        prefix = clean_num[:4] if clean_num.startswith("08") else ("0" + clean_num[2:5] if clean_num.startswith("628") else "")
 
-    if prefix in ["0811", "0812", "0813", "0821", "0822", "0823", "0851", "0852", "0853"]:
-        operator = "Telkomsel"
-    elif prefix in ["0814", "0815", "0816", "0855", "0856", "0857", "0858"]:
-        operator = "Indosat Ooredoo"
-    elif prefix in ["0817", "0818", "0819", "0859", "0877", "0878"]:
-        operator = "XL Axiata"
-    elif prefix in ["0831", "0832", "0833", "0838"]:
-        operator = "Axis"
-    elif prefix in ["0895", "0896", "0897", "0898", "0899"]:
-        operator = "Tri (3)"
-    elif prefix in ["0881", "0882", "0883", "0884", "0885", "0886", "0887", "0888", "0889"]:
-        operator = "Smartfren"
+        if prefix in ["0811", "0812", "0813", "0821", "0822", "0823", "0851", "0852", "0853"]:
+            operator = "Telkomsel"
+        elif prefix in ["0814", "0815", "0816", "0855", "0856", "0857", "0858"]:
+            operator = "Indosat Ooredoo"
+        elif prefix in ["0817", "0818", "0819", "0859", "0877", "0878"]:
+            operator = "XL Axiata"
+        elif prefix in ["0831", "0832", "0833", "0838"]:
+            operator = "Axis"
+        elif prefix in ["0895", "0896", "0897", "0898", "0899"]:
+            operator = "Tri (3)"
+        elif prefix in ["0881", "0882", "0883", "0884", "0885", "0886", "0887", "0888", "0889"]:
+            operator = "Smartfren"
 
-    # Simulasi logika databreach
-    breaches = []
-    is_breached = False
-    
-    # Contoh sampel simulasi leak
-    if "7172" in clean_num or "999" in clean_num:
-        is_breached = True
-        breaches = [
-            {
-                "name": "E-Commerce DB Breach (2023)",
-                "date": "2023-11-14",
-                "details": "Email, Hash Password, Nomor Telepon, Alamat Pengiriman terdeteksi bocor."
-            },
-            {
-                "name": "Telecom Provider Log Leak",
-                "date": "2022-08-02",
-                "details": "NIK KTP, Nomor HP, Registrasi SIM Card terdeteksi di forum underground."
+        # Simulasi logika databreach
+        breaches = []
+        is_breached = False
+        
+        if "7172" in clean_num or "999" in clean_num:
+            is_breached = True
+            breaches = [
+                {
+                    "name": "E-Commerce DB Breach (2023)",
+                    "date": "2023-11-14",
+                    "details": "Email, Hash Password, Nomor Telepon, Alamat Pengiriman terdeteksi bocor."
+                },
+                {
+                    "name": "Telecom Provider Log Leak",
+                    "date": "2022-08-02",
+                    "details": "NIK KTP, Nomor HP, Registrasi SIM Card terdeteksi di forum underground."
+                }
+            ]
+
+        return {
+            "success": True,
+            "data": {
+                "formatted_phone": formatted,
+                "clean_phone": clean_num,
+                "country": "Indonesia",
+                "country_code": "+62",
+                "operator": operator,
+                "valid_format": True,
+                "breached": is_breached,
+                "breaches_count": len(breaches),
+                "breaches": breaches
             }
-        ]
-
-    return {
-        "success": True,
-        "data": {
-            "formatted_phone": formatted,
-            "clean_phone": clean_num,
-            "country": "Indonesia",
-            "country_code": "+62",
-            "operator": operator,
-            "valid_format": True,
-            "breached": is_breached,
-            "breaches_count": len(breaches),
-            "breaches": breaches
         }
-    }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Phone Recon Error: {str(e)}"})
 
 
 @app.post("/api/metadata")
@@ -123,26 +134,25 @@ async def extract_metadata(file: UploadFile = File(...)):
     """Ekstraksi metadata EXIF, GPS, dan Hash dari file gambar"""
     try:
         contents = await file.read()
+        if not contents:
+            return JSONResponse(status_code=400, content={"success": False, "message": "File kosong atau tidak valid"})
         
         # Hitung Hash MD5 & SHA256
         md5_hash = hashlib.md5(contents).hexdigest()
         sha256_hash = hashlib.sha256(contents).hexdigest()
-        
-        # Hitung Ukuran File
         file_size_kb = f"{len(contents) / 1024:.2f} KB"
         
         metadata = {}
         gps_data = {"has_gps": False}
         
         try:
-            # Buka gambar menggunakan PIL
-            file.file.seek(0)
-            img = Image.open(file.file)
+            # Membaca Bytes menggunakan io.BytesIO (Aman di Render)
+            img = Image.open(io.BytesIO(contents))
             metadata["Dimensions"] = f"{img.width} x {img.height} px"
-            metadata["Format"] = img.format
-            metadata["Mode"] = img.mode
+            metadata["Format"] = str(img.format)
+            metadata["Mode"] = str(img.mode)
 
-            exif_raw = img._getexif()
+            exif_raw = img._getexif() if hasattr(img, '_getexif') else None
             if exif_raw:
                 gps_info = {}
                 for tag_id, value in exif_raw.items():
@@ -155,7 +165,7 @@ async def extract_metadata(file: UploadFile = File(...)):
                         if isinstance(value, (str, int, float)):
                             metadata[str(tag)] = str(value)
 
-                # Ekstraksi Koordinat GPS jika ada
+                # Ekstraksi Koordinat GPS
                 if gps_info and 'GPSLatitude' in gps_info and 'GPSLongitude' in gps_info:
                     lat = get_decimal_from_dms(gps_info['GPSLatitude'], gps_info.get('GPSLatitudeRef', 'N'))
                     lon = get_decimal_from_dms(gps_info['GPSLongitude'], gps_info.get('GPSLongitudeRef', 'E'))
@@ -168,8 +178,8 @@ async def extract_metadata(file: UploadFile = File(...)):
                             "google_maps": f"https://www.google.com/maps?q={lat},{lon}",
                             "openstreetmap": f"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}"
                         }
-        except Exception:
-            metadata["Parsing_Note"] = "Standard non-EXIF image format"
+        except Exception as img_err:
+            metadata["Parsing_Note"] = f"Format gambar non-EXIF ({str(img_err)})"
 
         return {
             "success": True,
@@ -184,76 +194,81 @@ async def extract_metadata(file: UploadFile = File(...)):
         }
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Metadata Error: {str(e)}"})
 
 
 @app.get("/api/scan")
 async def scan_target(target: str = Query(..., description="Domain atau IP Target")):
-    """Simple Port & IP Reconnaissance"""
-    clean_target = target.replace("http://", "").replace("https://", "").split("/")[0]
-    
+    """Port Scanning & Server Inspection"""
     try:
-        ip_address = socket.gethostbyname(clean_target)
-    except socket.gaierror:
-        return JSONResponse(status_code=400, content={"success": False, "message": "Domain/Host tidak dapat ditemukan"})
+        clean_target = target.replace("http://", "").replace("https://", "").split("/")[0]
+        
+        try:
+            ip_address = socket.gethostbyname(clean_target)
+        except socket.gaierror:
+            return JSONResponse(status_code=400, content={"success": False, "message": "Domain/Host tidak ditemukan"})
 
-    # Port umum yang diperiksa
-    common_ports = [21, 22, 80, 443, 8080, 3306]
-    port_results = {}
+        common_ports = [21, 22, 80, 443, 8080, 3306]
+        port_results = {}
 
-    for port in common_ports:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.6)
-        result = sock.connect_ex((ip_address, port))
-        port_results[str(port)] = "OPEN" if result == 0 else "CLOSED"
-        sock.close()
+        for port in common_ports:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(0.5)
+            result = sock.connect_ex((ip_address, port))
+            port_results[str(port)] = "OPEN" if result == 0 else "CLOSED"
+            sock.close()
 
-    return {
-        "success": True,
-        "data": {
-            "target": clean_target,
-            "ip_address": ip_address,
-            "status": "ONLINE",
-            "ports": port_results
+        return {
+            "success": True,
+            "data": {
+                "target": clean_target,
+                "ip_address": ip_address,
+                "status": "ONLINE",
+                "ports": port_results
+            }
         }
-    }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Scan Error: {str(e)}"})
 
 
 @app.get("/api/recon/username")
 async def recon_username(username: str = Query(..., description="Username target")):
-    """Pengecekan ketersediaan/keberadaan profil sosial media"""
-    clean_user = username.strip().replace("@", "")
-    
-    platforms = [
-        {"name": "GitHub", "url": f"https://github.com/{clean_user}"},
-        {"name": "Instagram", "url": f"https://instagram.com/{clean_user}"},
-        {"name": "Twitter / X", "url": f"https://x.com/{clean_user}"},
-        {"name": "Telegram", "url": f"https://t.me/{clean_user}"},
-        {"name": "TikTok", "url": f"https://tiktok.com/@{clean_user}"},
-        {"name": "Pinterest", "url": f"https://pinterest.com/{clean_user}"}
-    ]
+    """Pengecekan username sosial media"""
+    try:
+        clean_user = username.strip().replace("@", "")
+        
+        platforms = [
+            {"name": "GitHub", "url": f"https://github.com/{clean_user}"},
+            {"name": "Instagram", "url": f"https://instagram.com/{clean_user}"},
+            {"name": "Twitter / X", "url": f"https://x.com/{clean_user}"},
+            {"name": "Telegram", "url": f"https://t.me/{clean_user}"},
+            {"name": "TikTok", "url": f"https://tiktok.com/@{clean_user}"},
+            {"name": "Pinterest", "url": f"https://pinterest.com/{clean_user}"}
+        ]
 
-    results = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        results = []
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
-    for p in platforms:
-        try:
-            r = requests.head(p["url"], headers=headers, timeout=2.5, allow_redirects=True)
-            status = "FOUND" if r.status_code == 200 else "NOT_FOUND"
-        except Exception:
-            status = "CHECK_MANUALLY"
+        for p in platforms:
+            try:
+                r = requests.head(p["url"], headers=headers, timeout=2.0, allow_redirects=True)
+                status = "FOUND" if r.status_code == 200 else "NOT_FOUND"
+            except Exception:
+                status = "CHECK_MANUALLY"
 
-        results.append({
-            "platform": p["name"],
-            "url": p["url"],
-            "status": status
-        })
+            results.append({
+                "platform": p["name"],
+                "url": p["url"],
+                "status": status
+            })
 
-    return {
-        "success": True,
-        "username": clean_user,
-        "results": results
-    }
+        return {
+            "success": True,
+            "username": clean_user,
+            "results": results
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Username Recon Error: {str(e)}"})
 
 
 if __name__ == "__main__":
