@@ -11,15 +11,13 @@ from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
 import hashlib
+import re
 
 # Import WHOIS
 try:
     import whois
 except ImportError:
-    try:
-        import pythonwhois as whois
-    except ImportError:
-        whois = None
+    whois = None
 
 # Import Library Dokumen Opsional
 try:
@@ -32,14 +30,7 @@ try:
 except ImportError:
     docx = None
 
-try:
-    import openpyxl
-except ImportError:
-    openpyxl = None
-
-
-# --- 1. INISIALISASI APP ---
-app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="6.0")
+app = FastAPI(title="VEKTOR ZERO - OSINT Cyber Engine", version="7.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,7 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- 2. DATABASE INITIALIZATION ---
 def init_db():
     try:
         conn = sqlite3.connect("osint_history.db")
@@ -66,20 +56,19 @@ def init_db():
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"Warning: Gagal inisialisasi database SQLite: {e}")
+        print(f"Warning: Gagal db init: {e}")
 
 init_db()
 
-# --- 3. UTILITIES ---
 def check_single_port(ip: str, port: int):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(0.8)
-        result = s.connect_ex((ip, port))
+        res = s.connect_ex((ip, port))
         s.close()
-        return port, "Terbuka" if result == 0 else "Tertutup"
+        return port, "Open" if res == 0 else "Closed"
     except Exception:
-        return port, "Tertutup"
+        return port, "Closed"
 
 def convert_to_degrees(value):
     try:
@@ -90,7 +79,7 @@ def convert_to_degrees(value):
     except Exception:
         return 0.0
 
-def calculate_file_hashes(file_bytes: bytes):
+def calculate_hashes(file_bytes: bytes):
     return {
         "md5": hashlib.md5(file_bytes).hexdigest(),
         "sha1": hashlib.sha1(file_bytes).hexdigest(),
@@ -103,183 +92,97 @@ def check_username_platform(platform: str, url_template: str, username: str):
     try:
         res = requests.get(url, headers=headers, timeout=3)
         if res.status_code == 200:
-            return platform, "Ditemukan", url
+            return platform, "Found", url
         elif res.status_code == 404:
-            return platform, "Tidak Ditemukan", url
+            return platform, "Not Found", url
         else:
-            return platform, f"Status Code: {res.status_code}", url
+            return platform, f"HTTP {res.status_code}", url
     except Exception:
-        return platform, "Error / Timeout", url
-
-# --- 4. ENDPOINTS / ROUTES ---
+        return platform, "Timeout", url
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     html_path = os.path.join(base_dir, "index.html")
-    
     if os.path.exists(html_path):
         with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
-            
-    return """
-    <html>
-        <head><title>Enterprise OSINT Engine</title></head>
-        <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
-            <h1>⚠️ File index.html tidak ditemukan!</h1>
-            <p>Pastikan file index.html berada di folder yang sama (root) dengan main.py</p>
-        </body>
-    </html>
-    """
+    return "<h1>File index.html tidak ditemukan!</h1>"
 
-@app.get("/api/developer")
-def get_developer_info():
-    return {
-        "developer": "ZEEO",
-        "signature": "VEKTOR ZERO",
-        "email": "VektorZero0@gmail.com",
-        "whatsapp": "082371729760",
-        "links": {
-            "email_url": "mailto:mishbachachmad07@gmail.com",
-            "wa_url": "https://wa.me/6282371729760"
-        }
-    }
-
-# Endpoint Metadata File & Ekstraksi GPS
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     file_bytes = await file.read()
     filename = file.filename
     ext = os.path.splitext(filename)[1].lower()
-    
-    hashes = calculate_file_hashes(file_bytes)
+    hashes = calculate_hashes(file_bytes)
     metadata_results = {}
-    lat_deg = None
-    lon_deg = None
+    lat_deg, lon_deg = None, None
 
     if ext in [".jpg", ".jpeg", ".png", ".webp", ".tiff"]:
-        temp_file_path = f"temp_{filename}"
-        with open(temp_file_path, "wb") as buffer:
-            buffer.write(file_bytes)
-
+        temp_file = f"temp_{filename}"
+        with open(temp_file, "wb") as f: f.write(file_bytes)
         try:
-            image = Image.open(temp_file_path)
+            image = Image.open(temp_file)
             exifdata = image.getexif()
-            
             if exifdata:
                 for tag_id in exifdata:
                     tag = TAGS.get(tag_id, tag_id)
                     data = exifdata.get(tag_id)
-                    if isinstance(data, bytes):
-                        data = data.decode(errors="ignore")
-                    if tag != "GPSInfo":
-                        metadata_results[str(tag)] = str(data)
-
+                    if isinstance(data, bytes): data = data.decode(errors="ignore")
+                    if tag != "GPSInfo": metadata_results[str(tag)] = str(data)
                 try:
                     gps_info = exifdata.get_ifd(34853)
                     if gps_info:
                         gps_data = {GPSTAGS.get(t, t): gps_info[t] for t in gps_info}
-                        lat = gps_data.get("GPSLatitude")
-                        lat_ref = gps_data.get("GPSLatitudeRef")
-                        lon = gps_data.get("GPSLongitude")
-                        lon_ref = gps_data.get("GPSLongitudeRef")
-
+                        lat, lat_ref = gps_data.get("GPSLatitude"), gps_data.get("GPSLatitudeRef")
+                        lon, lon_ref = gps_data.get("GPSLongitude"), gps_data.get("GPSLongitudeRef")
                         if lat and lon and lat_ref and lon_ref:
                             lat_deg = convert_to_degrees(lat)
-                            if str(lat_ref).upper() != "N":
-                                lat_deg = -lat_deg
-
+                            if str(lat_ref).upper() != "N": lat_deg = -lat_deg
                             lon_deg = convert_to_degrees(lon)
-                            if str(lon_ref).upper() != "E":
-                                lon_deg = -lon_deg
-
+                            if str(lon_ref).upper() != "E": lon_deg = -lon_deg
                             metadata_results["Latitude"] = f"{lat_deg:.6f} ({lat_ref})"
                             metadata_results["Longitude"] = f"{lon_deg:.6f} ({lon_ref})"
-                except Exception:
-                    pass
-            else:
-                metadata_results["Info"] = "Tidak ditemukan data EXIF/Metadata pada gambar ini."
-            
-            metadata_results["Format File"] = image.format
-            metadata_results["Ukuran Gambar"] = f"{image.width}x{image.height} pixels"
-            metadata_results["Mode Warna"] = image.mode
+                except Exception: pass
+            metadata_results["Dimensions"] = f"{image.width} x {image.height} px"
+            metadata_results["Color Mode"] = image.mode
             image.close()
-        except Exception as e:
-            metadata_results["Error"] = f"Gagal membaca metadata gambar: {str(e)}"
-        
-        if os.path.exists(temp_file_path):
-            os.remove(temp_file_path)
+        except Exception as e: metadata_results["Error"] = str(e)
+        if os.path.exists(temp_file): os.remove(temp_file)
 
     elif ext == ".pdf":
         temp_pdf = f"temp_{filename}"
-        with open(temp_pdf, "wb") as f:
-            f.write(file_bytes)
+        with open(temp_pdf, "wb") as f: f.write(file_bytes)
         try:
             if pypdf:
                 reader = pypdf.PdfReader(temp_pdf)
-                doc_info = reader.metadata
-                if doc_info:
-                    for key, val in doc_info.items():
-                        clean_key = str(key).replace("/", "")
-                        metadata_results[clean_key] = str(val)
-                metadata_results["Jumlah Halaman"] = str(len(reader.pages))
-            else:
-                metadata_results["Warning"] = "Library 'pypdf' belum terpasang."
-        except Exception as e:
-            metadata_results["Error"] = f"Gagal membaca metadata PDF: {str(e)}"
-        if os.path.exists(temp_pdf):
-            os.remove(temp_pdf)
-
-    elif ext == ".docx":
-        temp_docx = f"temp_{filename}"
-        with open(temp_docx, "wb") as f:
-            f.write(file_bytes)
-        try:
-            if docx:
-                doc = docx.Document(temp_docx)
-                prop = doc.core_properties
-                metadata_results["Author"] = str(prop.author)
-                metadata_results["Created"] = str(prop.created)
-                metadata_results["Last Modified By"] = str(prop.last_modified_by)
-                metadata_results["Modified"] = str(prop.modified)
-                metadata_results["Revision"] = str(prop.revision)
-                metadata_results["Title"] = str(prop.title)
-            else:
-                metadata_results["Warning"] = "Library 'python-docx' belum terpasang."
-        except Exception as e:
-            metadata_results["Error"] = f"Gagal membaca metadata DOCX: {str(e)}"
-        if os.path.exists(temp_docx):
-            os.remove(temp_docx)
-
-    else:
-        metadata_results["Info"] = f"Ekstraksi spesifik untuk {ext} tidak didukung. Menampilkan hash file."
+                if reader.metadata:
+                    for k, v in reader.metadata.items(): metadata_results[str(k).replace("/", "")] = str(v)
+                metadata_results["Total Pages"] = str(len(reader.pages))
+        except Exception as e: metadata_results["Error"] = str(e)
+        if os.path.exists(temp_pdf): os.remove(temp_pdf)
 
     osint_links = {}
     if lat_deg is not None and lon_deg is not None:
         osint_links = {
-            "google_maps": f"https://www.google.com/maps?q={lat_deg},{lon_deg}",
-            "suncalc": f"https://www.suncalc.org/#/{lat_deg},{lon_deg},17/null/null/null/null",
-            "snapchat_map": f"https://map.snapchat.com/@{lat_deg},{lon_deg},15.00z",
-            "opentopomap": f"https://opentopomap.org/#map=15/{lat_deg}/{lon_deg}"
+            "Google Maps": f"https://www.google.com/maps?q={lat_deg},{lon_deg}",
+            "SunCalc OSINT": f"https://www.suncalc.org/#/{lat_deg},{lon_deg},17/null/null/null/null",
+            "OpenTopoMap": f"https://opentopomap.org/#map=15/{lat_deg}/{lon_deg}"
         }
 
     return {
         "success": True,
         "filename": filename,
-        "file_size_bytes": len(file_bytes),
+        "file_size": f"{len(file_bytes) / 1024:.2f} KB",
         "hashes": hashes,
-        "coordinates": {"latitude": lat_deg, "longitude": lon_deg} if lat_deg else None,
         "osint_links": osint_links,
         "metadata": metadata_results
     }
 
-# [FITUR BARU 1] Endpoint Social Media & Username Recon
 @app.get("/api/recon/username")
 def recon_username(username: str):
     username = username.strip().replace("@", "")
-    if not username:
-        raise HTTPException(status_code=400, detail="Username tidak boleh kosong.")
-
+    if not username: raise HTTPException(status_code=400, detail="Empty username")
     platforms = {
         "GitHub": "https://github.com/{}",
         "Telegram": "https://t.me/{}",
@@ -287,131 +190,101 @@ def recon_username(username: str):
         "Pinterest": "https://www.pinterest.com/{}",
         "TikTok": "https://www.tiktok.com/@{}"
     }
-
     results = []
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(check_username_platform, p, url, username) for p, url in platforms.items()]
-        for future in futures:
-            p, status, profile_url = future.result()
-            results.append({
-                "platform": p,
-                "status": status,
-                "url": profile_url
-            })
-
+        for f in futures:
+            p, st, u = f.result()
+            results.append({"platform": p, "status": st, "url": u})
     return {"success": True, "username": username, "results": results}
 
-# [FITUR BARU 2] Endpoint IP Geolocation & Intelligence Lookup
 @app.get("/api/recon/ip-intel")
 def recon_ip_intel(ip: str):
-    ip = ip.strip()
     try:
-        res = requests.get(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,query", timeout=4)
+        res = requests.get(f"http://ip-api.com/json/{ip.strip()}?fields=status,message,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,query", timeout=4)
         data = res.json()
-        if data.get("status") == "success":
-            return {"success": True, "ip_intel": data}
-        else:
-            return {"success": False, "message": data.get("message", "Gagal melacak IP.")}
+        return {"success": data.get("status") == "success", "ip_intel": data}
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-# Endpoint Header Generator
-@app.get("/api/util/header-generator")
-def generate_headers(preset: str = Query("desktop_chrome", enum=["desktop_chrome", "mobile_android", "mobile_ios", "googlebot"])):
-    user_agents = {
-        "desktop_chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "mobile_android": "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.64 Mobile Safari/537.36",
-        "mobile_ios": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1",
-        "googlebot": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-    }
+# [FITUR BARU 1] Email OSINT & Domain Reputation Analyzer
+@app.get("/api/recon/email")
+def recon_email(email: str):
+    email = email.strip()
+    regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    is_valid_format = bool(re.match(regex, email))
     
-    selected_ua = user_agents.get(preset, user_agents["desktop_chrome"])
+    if not is_valid_format:
+        return {"success": False, "message": "Format email tidak valid."}
     
-    headers = {
-        "User-Agent": selected_ua,
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive"
-    }
+    domain = email.split("@")[1]
+    disposable_domains = ["tempmail.com", "guerrillamail.com", "10minutemail.com", "mailinator.com", "trashmail.com"]
+    is_disposable = domain.lower() in disposable_domains
     
+    mx_records = []
+    try:
+        answers = dns.resolver.resolve(domain, 'MX')
+        for rdata in answers:
+            mx_records.append(str(rdata.exchange))
+    except Exception: pass
+
     return {
         "success": True,
-        "preset": preset,
-        "headers": headers,
-        "curl_example": f"curl -H 'User-Agent: {selected_ua}' TARGET_URL"
+        "email": email,
+        "domain": domain,
+        "valid_syntax": is_valid_format,
+        "is_disposable": is_disposable,
+        "mx_records": mx_records,
+        "has_mail_server": len(mx_records) > 0
     }
 
-# Endpoint Scan Target OSINT (Domain/IP)
+# [FITUR BARU 2] DNS Security & Record Enumeration
+@app.get("/api/recon/dns-enum")
+def recon_dns_enum(domain: str):
+    domain = domain.strip().replace("https://", "").replace("http://", "").split("/")[0]
+    record_types = ['A', 'AAAA', 'MX', 'NS', 'TXT']
+    dns_data = {}
+    
+    for r_type in record_types:
+        try:
+            answers = dns.resolver.resolve(domain, r_type)
+            dns_data[r_type] = [str(rdata) for rdata in answers]
+        except Exception:
+            dns_data[r_type] = []
+
+    return {"success": True, "domain": domain, "records": dns_data}
+
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
-    
-    if not target:
-        raise HTTPException(status_code=400, detail="Target tidak boleh kosong.")
+    if not target: raise HTTPException(status_code=400, detail="Target required")
 
-    ip_address = "Tidak ditemukan"
-    http_status = "Offline / Down"
-    server_info = "Tidak diketahui"
-    registrar = "Tidak diketahui"
-    creation_date = "Tidak diketahui"
-    dns_records = []
+    try: ip_address = socket.gethostbyname(target)
+    except Exception: ip_address = "DNS Resolution Failed"
 
     try:
-        ip_address = socket.gethostbyname(target)
-    except socket.gaierror:
-        ip_address = "Gagal meresolusi DNS"
-
-    try:
-        response = requests.get(f"https://{target}", timeout=4)
-        http_status = f"Online ({response.status_code} OK)"
-        server_info = response.headers.get("Server", "Cloudflare / Protected")
+        res = requests.get(f"https://{target}", timeout=4)
+        http_status, server_info = f"Online ({res.status_code})", res.headers.get("Server", "Cloudflare/Protected")
     except Exception:
-        try:
-            response = requests.get(f"http://{target}", timeout=4)
-            http_status = f"Online HTTP ({response.status_code} OK)"
-            server_info = response.headers.get("Server", "Tidak diketahui")
-        except Exception:
-            http_status = "Offline / Ports Blocked"
+        http_status, server_info = "Offline / Blocked", "N/A"
 
+    registrar = "N/A"
     if whois:
         try:
             w = whois.whois(target)
-            registrar = str(w.registrar) if w.registrar else "Tidak diketahui"
-            creation_date = str(w.creation_date[0] if isinstance(w.creation_date, list) else w.creation_date)
-        except Exception:
-            registrar = "Data Whois diproteksi / Privat"
-            creation_date = "Tidak tersedia"
-    else:
-        registrar = "Modul WHOIS tidak terinstal"
+            registrar = str(w.registrar) if w.registrar else "Private"
+        except Exception: registrar = "Protected"
 
-    try:
-        answers = dns.resolver.resolve(target, 'A')
-        for rdata in answers:
-            dns_records.append(str(rdata))
-    except Exception:
-        pass
-
-    ports_to_check = [21, 22, 53, 80, 443, 3306, 8080]
+    ports = [21, 22, 80, 443, 3306, 8080]
     port_results = {}
-    if ip_address not in ["Gagal meresolusi DNS", "Tidak ditemukan"]:
-        with ThreadPoolExecutor(max_workers=7) as executor:
-            futures = [executor.submit(check_single_port, ip_address, p) for p in ports_to_check]
-            for future in futures:
-                p, status = future.result()
-                port_results[str(p)] = status
+    if "Failed" not in ip_address:
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            futures = [executor.submit(check_single_port, ip_address, p) for p in ports]
+            for f in futures:
+                p, st = f.result()
+                port_results[str(p)] = st
 
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    try:
-        conn = sqlite3.connect("osint_history.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO scan_logs (target, ip_address, status, checked_at) VALUES (?, ?, ?, ?)",
-                       (target, ip_address, http_status, current_time))
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
-
     return {
         "success": True,
         "data": {
@@ -420,23 +293,7 @@ def scan_target(target: str):
             "status": http_status,
             "web_server": server_info,
             "registrar": registrar,
-            "creation_date": creation_date,
-            "dns_records": dns_records,
             "ports": port_results,
             "checked_at": current_time
         }
     }
-
-@app.get("/api/history")
-def get_history():
-    try:
-        conn = sqlite3.connect("osint_history.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT target, ip_address, status, checked_at FROM scan_logs ORDER BY id DESC LIMIT 10")
-        rows = cursor.fetchall()
-        conn.close()
-        
-        history = [{"target": r[0], "ip_address": r[1], "status": r[2], "checked_at": r[3]} for r in rows]
-        return {"success": True, "history": history}
-    except Exception:
-        return {"success": True, "history": []}
