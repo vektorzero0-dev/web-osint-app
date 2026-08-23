@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import requests
 import socket
-import whois
 import dns.resolver
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -12,9 +11,17 @@ from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 import os
 import hashlib
-import urllib.parse
 
-# Import library pendukung analisis dokumen (Fitur 3)
+# Import WHOIS dengan penanganan eror ganda (menghindari kegagalan build Render)
+try:
+    import whois
+except ImportError:
+    try:
+        import pythonwhois as whois
+    except ImportError:
+        whois = None
+
+# Import Library Dokumen Opsional (Fitur 3)
 try:
     import pypdf
 except ImportError:
@@ -30,8 +37,9 @@ try:
 except ImportError:
     openpyxl = None
 
+
 # --- 1. INISIALISASI APP ---
-app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="5.1")
+app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="5.2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,19 +51,22 @@ app.add_middleware(
 
 # --- 2. DATABASE INITIALIZATION ---
 def init_db():
-    conn = sqlite3.connect("osint_history.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS scan_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            target TEXT,
-            ip_address TEXT,
-            status TEXT,
-            checked_at TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect("osint_history.db")
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS scan_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                target TEXT,
+                ip_address TEXT,
+                status TEXT,
+                checked_at TEXT
+            )
+        """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Warning: Gagal inisialisasi database SQLite: {e}")
 
 init_db()
 
@@ -67,7 +78,7 @@ def check_single_port(ip: str, port: int):
         result = s.connect_ex((ip, port))
         s.close()
         return port, "Terbuka" if result == 0 else "Tertutup"
-    except:
+    except Exception:
         return port, "Tertutup"
 
 def convert_to_degrees(value):
@@ -80,7 +91,6 @@ def convert_to_degrees(value):
         return 0.0
 
 def calculate_file_hashes(file_bytes: bytes):
-    """Menghitung Hash Integrity (MD5, SHA1, SHA256) untuk Chain of Custody."""
     return {
         "md5": hashlib.md5(file_bytes).hexdigest(),
         "sha1": hashlib.sha1(file_bytes).hexdigest(),
@@ -89,17 +99,22 @@ def calculate_file_hashes(file_bytes: bytes):
 
 # --- 4. ENDPOINTS / ROUTES ---
 
+# Halaman Utama Dashboard (Menggunakan Absolute Path Anti-Crash)
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    if os.path.exists("index.html"):
-        with open("index.html", "r", encoding="utf-8") as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    html_path = os.path.join(base_dir, "index.html")
+    
+    if os.path.exists(html_path):
+        with open(html_path, "r", encoding="utf-8") as f:
             return f.read()
+            
     return """
     <html>
         <head><title>Enterprise OSINT Engine</title></head>
         <body style="background: #0f172a; color: #38bdf8; font-family: monospace; text-align: center; padding-top: 50px;">
             <h1>⚠️ File index.html tidak ditemukan!</h1>
-            <p>Pastikan file index.html berada di folder yang sama dengan main.py</p>
+            <p>Pastikan file index.html berada di folder yang sama (root) dengan main.py</p>
         </body>
     </html>
     """
@@ -117,7 +132,7 @@ def get_developer_info():
         }
     }
 
-# [PEMBARUAN FITUR 3 & 4] Endpoint Metadata File (Gambar & Dokumen + Link OSINT + Hash)
+# Endpoint Metadata File & Ekstraksi GPS Presisi + Hashes
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     file_bytes = await file.read()
@@ -129,7 +144,7 @@ async def extract_metadata(file: UploadFile = File(...)):
     lat_deg = None
     lon_deg = None
 
-    # A. PROSES FILE GAMBAR (.jpg, .jpeg, .png, dll)
+    # A. Gambar
     if ext in [".jpg", ".jpeg", ".png", ".webp", ".tiff"]:
         temp_file_path = f"temp_{filename}"
         with open(temp_file_path, "wb") as buffer:
@@ -183,7 +198,7 @@ async def extract_metadata(file: UploadFile = File(...)):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-    # B. PROSES FILE DOKUMEN PDF (FITUR 3)
+    # B. PDF
     elif ext == ".pdf":
         temp_pdf = f"temp_{filename}"
         with open(temp_pdf, "wb") as f:
@@ -198,13 +213,13 @@ async def extract_metadata(file: UploadFile = File(...)):
                         metadata_results[clean_key] = str(val)
                 metadata_results["Jumlah Halaman"] = str(len(reader.pages))
             else:
-                metadata_results["Warning"] = "Library 'pypdf' belum terpasang di server."
+                metadata_results["Warning"] = "Library 'pypdf' belum terpasang."
         except Exception as e:
             metadata_results["Error"] = f"Gagal membaca metadata PDF: {str(e)}"
         if os.path.exists(temp_pdf):
             os.remove(temp_pdf)
 
-    # C. PROSES FILE DOKUMEN WORD (.docx) (FITUR 3)
+    # C. DOCX
     elif ext == ".docx":
         temp_docx = f"temp_{filename}"
         with open(temp_docx, "wb") as f:
@@ -227,9 +242,9 @@ async def extract_metadata(file: UploadFile = File(...)):
             os.remove(temp_docx)
 
     else:
-        metadata_results["Info"] = f"Ekstraksi spesifik untuk ekstensi {ext} tidak didukung. Menampilkan hash file."
+        metadata_results["Info"] = f"Ekstraksi spesifik untuk {ext} tidak didukung. Menampilkan hash file."
 
-    # [PEMBARUAN FITUR 4] Generasi Link OSINT dari Koordinat GPS
+    # Link OSINT GPS
     osint_links = {}
     if lat_deg is not None and lon_deg is not None:
         osint_links = {
@@ -249,7 +264,7 @@ async def extract_metadata(file: UploadFile = File(...)):
         "metadata": metadata_results
     }
 
-# [PEMBARUAN FITUR 4] Endpoint Header & User-Agent Generator
+# Endpoint Header Generator
 @app.get("/api/util/header-generator")
 def generate_headers(preset: str = Query("desktop_chrome", enum=["desktop_chrome", "mobile_android", "mobile_ios", "googlebot"])):
     user_agents = {
@@ -265,17 +280,14 @@ def generate_headers(preset: str = Query("desktop_chrome", enum=["desktop_chrome
         "User-Agent": selected_ua,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1"
+        "Connection": "keep-alive"
     }
-    
-    curl_command = f"curl -H 'User-Agent: {selected_ua}' -H 'Accept-Language: en-US,en;q=0.5' TARGET_URL"
     
     return {
         "success": True,
         "preset": preset,
         "headers": headers,
-        "curl_example": curl_command
+        "curl_example": f"curl -H 'User-Agent: {selected_ua}' TARGET_URL"
     }
 
 # Endpoint Scan Target OSINT
@@ -302,32 +314,35 @@ def scan_target(target: str):
         response = requests.get(f"https://{target}", timeout=4)
         http_status = f"Online ({response.status_code} OK)"
         server_info = response.headers.get("Server", "Cloudflare / Protected")
-    except:
+    except Exception:
         try:
             response = requests.get(f"http://{target}", timeout=4)
             http_status = f"Online HTTP ({response.status_code} OK)"
             server_info = response.headers.get("Server", "Tidak diketahui")
-        except:
+        except Exception:
             http_status = "Offline / Ports Blocked"
 
-    try:
-        w = whois.whois(target)
-        registrar = str(w.registrar) if w.registrar else "Tidak diketahui"
-        creation_date = str(w.creation_date[0] if isinstance(w.creation_date, list) else w.creation_date)
-    except:
-        registrar = "Data Whois diproteksi / Privat"
-        creation_date = "Tidak tersedia"
+    if whois:
+        try:
+            w = whois.whois(target)
+            registrar = str(w.registrar) if w.registrar else "Tidak diketahui"
+            creation_date = str(w.creation_date[0] if isinstance(w.creation_date, list) else w.creation_date)
+        except Exception:
+            registrar = "Data Whois diproteksi / Privat"
+            creation_date = "Tidak tersedia"
+    else:
+        registrar = "Modul WHOIS tidak terinstal"
 
     try:
         answers = dns.resolver.resolve(target, 'A')
         for rdata in answers:
             dns_records.append(str(rdata))
-    except:
+    except Exception:
         pass
 
     ports_to_check = [21, 22, 53, 80, 443, 3306, 8080]
     port_results = {}
-    if ip_address != "Gagal meresolusi DNS" and ip_address != "Tidak ditemukan":
+    if ip_address not in ["Gagal meresolusi DNS", "Tidak ditemukan"]:
         with ThreadPoolExecutor(max_workers=7) as executor:
             futures = [executor.submit(check_single_port, ip_address, p) for p in ports_to_check]
             for future in futures:
@@ -343,37 +358,34 @@ def scan_target(target: str):
                        (target, ip_address, http_status, current_time))
         conn.commit()
         conn.close()
-    except:
+    except Exception:
         pass
 
-    result_data = {
-        "target": target,
-        "ip_address": ip_address,
-        "status": http_status,
-        "web_server": server_info,
-        "registrar": registrar,
-        "creation_date": creation_date,
-        "dns_records": dns_records,
-        "ports": port_results,
-        "checked_at": current_time
+    return {
+        "success": True,
+        "data": {
+            "target": target,
+            "ip_address": ip_address,
+            "status": http_status,
+            "web_server": server_info,
+            "registrar": registrar,
+            "creation_date": creation_date,
+            "dns_records": dns_records,
+            "ports": port_results,
+            "checked_at": current_time
+        }
     }
-
-    return {"success": True, "data": result_data}
 
 @app.get("/api/history")
 def get_history():
-    conn = sqlite3.connect("osint_history.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT target, ip_address, status, checked_at FROM scan_logs ORDER BY id DESC LIMIT 10")
-    rows = cursor.fetchall()
-    conn.close()
-    
-    history = []
-    for row in rows:
-        history.append({
-            "target": row[0],
-            "ip_address": row[1],
-            "status": row[2],
-            "checked_at": row[3]
-        })
-    return {"success": True, "history": history}
+    try:
+        conn = sqlite3.connect("osint_history.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT target, ip_address, status, checked_at FROM scan_logs ORDER BY id DESC LIMIT 10")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        history = [{"target": r[0], "ip_address": r[1], "status": r[2], "checked_at": r[3]} for r in rows]
+        return {"success": True, "history": history}
+    except Exception:
+        return {"success": True, "history": []}
