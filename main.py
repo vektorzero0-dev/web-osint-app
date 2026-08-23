@@ -12,7 +12,7 @@ from PIL.ExifTags import TAGS, GPSTAGS
 import os
 import hashlib
 
-# Import WHOIS dengan penanganan eror ganda (menghindari kegagalan build Render)
+# Import WHOIS
 try:
     import whois
 except ImportError:
@@ -21,7 +21,7 @@ except ImportError:
     except ImportError:
         whois = None
 
-# Import Library Dokumen Opsional (Fitur 3)
+# Import Library Dokumen Opsional
 try:
     import pypdf
 except ImportError:
@@ -39,7 +39,7 @@ except ImportError:
 
 
 # --- 1. INISIALISASI APP ---
-app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="5.2")
+app = FastAPI(title="Enterprise OSINT Intelligence Suite", version="6.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -97,9 +97,22 @@ def calculate_file_hashes(file_bytes: bytes):
         "sha256": hashlib.sha256(file_bytes).hexdigest()
     }
 
+def check_username_platform(platform: str, url_template: str, username: str):
+    url = url_template.format(username)
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    try:
+        res = requests.get(url, headers=headers, timeout=3)
+        if res.status_code == 200:
+            return platform, "Ditemukan", url
+        elif res.status_code == 404:
+            return platform, "Tidak Ditemukan", url
+        else:
+            return platform, f"Status Code: {res.status_code}", url
+    except Exception:
+        return platform, "Error / Timeout", url
+
 # --- 4. ENDPOINTS / ROUTES ---
 
-# Halaman Utama Dashboard (Menggunakan Absolute Path Anti-Crash)
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -132,7 +145,7 @@ def get_developer_info():
         }
     }
 
-# Endpoint Metadata File & Ekstraksi GPS Presisi + Hashes
+# Endpoint Metadata File & Ekstraksi GPS
 @app.post("/api/metadata")
 async def extract_metadata(file: UploadFile = File(...)):
     file_bytes = await file.read()
@@ -144,7 +157,6 @@ async def extract_metadata(file: UploadFile = File(...)):
     lat_deg = None
     lon_deg = None
 
-    # A. Gambar
     if ext in [".jpg", ".jpeg", ".png", ".webp", ".tiff"]:
         temp_file_path = f"temp_{filename}"
         with open(temp_file_path, "wb") as buffer:
@@ -198,7 +210,6 @@ async def extract_metadata(file: UploadFile = File(...)):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-    # B. PDF
     elif ext == ".pdf":
         temp_pdf = f"temp_{filename}"
         with open(temp_pdf, "wb") as f:
@@ -219,7 +230,6 @@ async def extract_metadata(file: UploadFile = File(...)):
         if os.path.exists(temp_pdf):
             os.remove(temp_pdf)
 
-    # C. DOCX
     elif ext == ".docx":
         temp_docx = f"temp_{filename}"
         with open(temp_docx, "wb") as f:
@@ -244,7 +254,6 @@ async def extract_metadata(file: UploadFile = File(...)):
     else:
         metadata_results["Info"] = f"Ekstraksi spesifik untuk {ext} tidak didukung. Menampilkan hash file."
 
-    # Link OSINT GPS
     osint_links = {}
     if lat_deg is not None and lon_deg is not None:
         osint_links = {
@@ -263,6 +272,48 @@ async def extract_metadata(file: UploadFile = File(...)):
         "osint_links": osint_links,
         "metadata": metadata_results
     }
+
+# [FITUR BARU 1] Endpoint Social Media & Username Recon
+@app.get("/api/recon/username")
+def recon_username(username: str):
+    username = username.strip().replace("@", "")
+    if not username:
+        raise HTTPException(status_code=400, detail="Username tidak boleh kosong.")
+
+    platforms = {
+        "GitHub": "https://github.com/{}",
+        "Telegram": "https://t.me/{}",
+        "Reddit": "https://www.reddit.com/user/{}",
+        "Pinterest": "https://www.pinterest.com/{}",
+        "TikTok": "https://www.tiktok.com/@{}"
+    }
+
+    results = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(check_username_platform, p, url, username) for p, url in platforms.items()]
+        for future in futures:
+            p, status, profile_url = future.result()
+            results.append({
+                "platform": p,
+                "status": status,
+                "url": profile_url
+            })
+
+    return {"success": True, "username": username, "results": results}
+
+# [FITUR BARU 2] Endpoint IP Geolocation & Intelligence Lookup
+@app.get("/api/recon/ip-intel")
+def recon_ip_intel(ip: str):
+    ip = ip.strip()
+    try:
+        res = requests.get(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,regionName,city,zip,lat,lon,timezone,isp,org,as,query", timeout=4)
+        data = res.json()
+        if data.get("status") == "success":
+            return {"success": True, "ip_intel": data}
+        else:
+            return {"success": False, "message": data.get("message", "Gagal melacak IP.")}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # Endpoint Header Generator
 @app.get("/api/util/header-generator")
@@ -290,7 +341,7 @@ def generate_headers(preset: str = Query("desktop_chrome", enum=["desktop_chrome
         "curl_example": f"curl -H 'User-Agent: {selected_ua}' TARGET_URL"
     }
 
-# Endpoint Scan Target OSINT
+# Endpoint Scan Target OSINT (Domain/IP)
 @app.get("/api/scan")
 def scan_target(target: str):
     target = target.strip().replace("https://", "").replace("http://", "").split("/")[0]
