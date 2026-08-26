@@ -12,6 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 from PIL.ExifTags import TAGS, GPSTAGS
 
+# Library parsing nomor internasional
+import phonenumbers
+from phonenumbers import geocoder, carrier, PhoneNumberType
+
 app = FastAPI(title="ZEEO Cyber Intel Suite API", version="3.0")
 
 # Izinkan CORS agar frontend bisa dipanggil dari mana saja
@@ -60,43 +64,42 @@ async def read_root():
 
 @app.get("/api/recon/phone")
 async def recon_phone(phone: str = Query(..., description="Nomor telepon target")):
-    """Audit provider & pengecekan kebocoran data terenkripsi"""
+    """Audit provider & deteksi negara presisi secara internasional"""
+    clean_input = phone.strip()
+    
+    # Normalisasi format input (Default jika diawali '0' dianggap nomor lokal Indonesia)
+    if clean_input.startswith("0"):
+        clean_input = "+62" + clean_input[1:]
+    elif not clean_input.startswith("+"):
+        clean_input = "+" + clean_input
+
     try:
-        clean_num = re.sub(r"\D", "", phone)
+        parsed_num = phonenumbers.parse(clean_input, None)
+        is_valid = phonenumbers.is_valid_number(parsed_num)
+
+        if not is_valid:
+            return JSONResponse(status_code=400, content={
+                "success": False,
+                "message": "Format nomor telepon tidak valid E.164"
+            })
+
+        # Deteksi Negara dan Kode Negara secara Akurat (Presisi untuk +234, +62, dll)
+        country_name = geocoder.country_name_for_number(parsed_num, "en") or "Unknown"
+        country_code = f"+{parsed_num.country_code}"
         
-        if not clean_num:
-            return JSONResponse(status_code=400, content={"success": False, "message": "Nomor telepon tidak valid"})
+        # Deteksi Operator / Provider
+        carrier_name = carrier.name_for_number(parsed_num, "en")
+        if not carrier_name:
+            carrier_name = "Unknown Provider / International"
 
-        # Format nomor ke format internasional Indonesia
-        if clean_num.startswith("0"):
-            formatted = "+62" + clean_num[1:]
-        elif clean_num.startswith("62"):
-            formatted = "+" + clean_num
-        else:
-            formatted = "+" + clean_num
-
-        # Deteksi Provider Indonesia
-        operator = "Unknown Provider"
-        prefix = clean_num[:4] if clean_num.startswith("08") else ("0" + clean_num[2:5] if clean_num.startswith("628") else "")
-
-        if prefix in ["0811", "0812", "0813", "0821", "0822", "0823", "0851", "0852", "0853"]:
-            operator = "Telkomsel"
-        elif prefix in ["0814", "0815", "0816", "0855", "0856", "0857", "0858"]:
-            operator = "Indosat Ooredoo"
-        elif prefix in ["0817", "0818", "0819", "0859", "0877", "0878"]:
-            operator = "XL Axiata"
-        elif prefix in ["0831", "0832", "0833", "0838"]:
-            operator = "Axis"
-        elif prefix in ["0895", "0896", "0897", "0898", "0899"]:
-            operator = "Tri (3)"
-        elif prefix in ["0881", "0882", "0883", "0884", "0885", "0886", "0887", "0888", "0889"]:
-            operator = "Smartfren"
+        formatted_phone = phonenumbers.format_number(parsed_num, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
+        clean_phone_digits = phonenumbers.format_number(parsed_num, phonenumbers.PhoneNumberFormat.E164).replace("+", "")
 
         # Simulasi logika databreach
         breaches = []
         is_breached = False
         
-        if "7172" in clean_num or "999" in clean_num:
+        if "7172" in clean_phone_digits or "999" in clean_phone_digits:
             is_breached = True
             breaches = [
                 {
@@ -114,11 +117,11 @@ async def recon_phone(phone: str = Query(..., description="Nomor telepon target"
         return {
             "success": True,
             "data": {
-                "formatted_phone": formatted,
-                "clean_phone": clean_num,
-                "country": "Indonesia",
-                "country_code": "+62",
-                "operator": operator,
+                "formatted_phone": formatted_phone,
+                "clean_phone": clean_phone_digits,
+                "country": country_name,
+                "country_code": country_code,
+                "operator": carrier_name,
                 "valid_format": True,
                 "breached": is_breached,
                 "breaches_count": len(breaches),
@@ -126,12 +129,16 @@ async def recon_phone(phone: str = Query(..., description="Nomor telepon target"
             }
         }
     except Exception as e:
-        return JSONResponse(status_code=500, content={"success": False, "message": f"Phone Recon Error: {str(e)}"})
+        return JSONResponse(status_code=500, content={
+            "success": False, 
+            "message": f"Phone Recon Error: {str(e)}"
+        })
 
 
 @app.post("/api/metadata")
+@app.post("/api/recon/exif")
 async def extract_metadata(file: UploadFile = File(...)):
-    """Ekstraksi metadata EXIF, GPS, dan Hash dari file gambar"""
+    """Ekstraksi metadata EXIF, GPS, dan Hash dari file gambar (Mendukung endpoint /api/metadata & /api/recon/exif)"""
     try:
         contents = await file.read()
         if not contents:
@@ -184,7 +191,11 @@ async def extract_metadata(file: UploadFile = File(...)):
         return {
             "success": True,
             "filename": file.filename,
+            "size_kb": round(len(contents) / 1024, 2),
             "file_size": file_size_kb,
+            "format": metadata.get("Format", "Unknown"),
+            "dimensions": metadata.get("Dimensions", "Unknown"),
+            "sha256": sha256_hash,
             "hashes": {
                 "md5": md5_hash,
                 "sha256": sha256_hash
